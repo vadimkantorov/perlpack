@@ -1,0 +1,83 @@
+name: perlpack
+
+on: workflow_dispatch
+
+env:
+  URLPERL: https://www.cpan.org/src/5.0/perl-5.35.4.tar.gz
+  MAKEFLAGS: -j2
+
+jobs:
+  perlpack:
+    runs-on: ubuntu-20.04
+    container: alpine:3.14
+    steps:
+      - name: Install Prerequisites
+        run:  apk add --update --no-cache libnsl libnsl-dev build-base coreutils cmake git xz wget perl gperf p7zip python3 strace && ln -sf python3 /usr/bin/python
+
+      - uses: actions/checkout@v2
+
+      - name: Build Native Perl
+        run: |
+          export MAKEFLAGS
+          mkdir -p source build/native/perl
+          wget -nc $URLPERL -P source
+          tar -xf source/$(basename $URLPERL) --strip-components=1 --directory=build/native/perl
+          
+          cd build/native/perl
+          sh ./Configure -sde -Dman1dir=none -Dman3dir=none -Dprefix=prefix -Aldflags=-lm -Accflags=-lm -Dstatic_ext="IO Fcntl  Cwd Opcode re mro B Socket POSIX attributes Storable Data/Dumper MIME/Base64 Digest/MD5 Digest/SHA Encode Encode/CN Encode/Unicode Encode/TW Encode/JP Encode/KR  Encode/Byte Encode/EBCDIC Encode/Symbol threads threads/shared Sys/Syslog Sys/Hostname Time/HiRes Time/Piece Unicode/Normalize Unicode/Collate Compress/Raw/Zlib Compress/Raw/Bzip2 PerlIO/scalar PerlIO/encoding PerlIO/via PerlIO/mmap Devel/Peek IPC/SysV File/Glob File/DosGlob Hash/Util Hash/Util/FieldHash Filter/Util/Call  I18N/Langinfo List/Util Math/BigInt/FastCalc SDBM_File" -Dusedevel -Dlibs="-lpthread -ldl -lm -lutil -lc"
+          make miniperl generate_uudmap
+          make perl
+          make install
+           
+          rm -rf prefix/man prefix/lib/*/pod/ || true
+          find prefix/lib -name '*.pod' -delete
+          find prefix -type f
+          find -name '*.a'
+          find prefix -name '*.so'
+          find prefix -name config.h
+          cd ../../..
+
+          ld -r -b binary -o fmtutil.o fmtutil.pl
+          ld -r -b binary -o updmap.o  updmap.pl
+
+          gcc -o perlpack perlpack.c fmtutil.o updmap.o -I$PWD/build/native/perl -I/usr/local/include -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -Ibuild/native/perl/prefix/lib/perl5/5.35.4/x86_64-linux/CORE      -Wl,-E -fstack-protector-strong -fwrapv -fno-strict-aliasing -L/usr/local/lib                         build/native/perl/prefix/lib/perl5/5.35.4/x86_64-linux/auto/Fcntl/Fcntl.a build/native/perl/prefix/lib/perl5/5.35.4/x86_64-linux/auto/IO/IO.a build/native/perl/prefix/lib/perl5/5.35.4/x86_64-linux/auto/Cwd/Cwd.a build/native/perl/prefix/lib/perl5/5.35.4/x86_64-linux/CORE/libperl.a -lpthread -ldl -lm -lutil -lc -lm 
+          ldd ./perlpack || true
+          ./perlpack updmap.pl --help || true
+      
+      - name: Test Native Perl
+        run: |
+          find build
+          git clone https://github.com/busytex/busyfs
+          mv build/native/perl/prefix busyfs/dist-native
+          find busyfs/dist-native -name '*.a'
+          find busyfs/dist-native -name '*.so'
+          cd busyfs
+          find dist-native -name '*.ld' -delete
+          find dist-native -name '*.a' -delete
+          find dist-native -name '*.h' -delete
+          python packfs.py -i dist-native -o packfs.h
+          cc -shared -fPIC packfs.c -o packfs.so -ldl @packfs.h.txt
+          find dist-native -name '*.o' -delete
+          cd ..
+
+          #strace -ff -e trace=file,read,write,close perl -e 'use Cwd;' 
+          #cc -shared -fPIC log_file_access_dynamic.c -o log_file_access_dynamic.so -ldl
+          #LD_PRELOAD=$PWD/log_file_access_dynamic.so perl -e 'use Cwd;'  #./perlpack fmtutil.pl --help 
+          
+          #LD_PRELOAD=$PWD/busyfs/packfs.so strace -ff -e trace=file,read,write,close perl -e 'open (FILE, "dist-native/lib/perl5/5.35.4/x86_64-linux/Cwd.pm"); print <FILE>;'
+          #LD_PRELOAD=$PWD/busyfs/packfs.so perl -e 'open (FILE, "dist-native/lib/perl5/5.35.4/x86_64-linux/Cwd.pm"); print <FILE>;'
+          
+          #LD_PRELOAD=$PWD/busyfs/packfs.so PERLLIB=dist-native/lib/perl5/5.35.4:dist-native/lib/perl5/5.35.4/x86_64-linux strace -ff -e trace=file,read,write,close  -perl -e 'use Cwd;'
+          export PERL_DL_DEBUG=1
+          echo RUN1
+          PERLLIB=busyfs/dist-native/lib/perl5/5.35.4:busyfs/dist-native/lib/perl5/5.35.4/x86_64-linux strace -ff -e trace=file,read,write,close ./perlpack -e 'use Cwd;print(Cwd::cwd()."\n");'
+          echo RUN2
+          LD_PRELOAD=$PWD/busyfs/packfs.so PERLLIB=dist-native/lib/perl5/5.35.4:dist-native/lib/perl5/5.35.4/x86_64-linux ./perlpack -e 'use Cwd;print(Cwd::cwd()."\n");'
+       
+      - name: Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts
+          path: |
+            busyfs/
+            build/
