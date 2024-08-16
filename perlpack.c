@@ -144,7 +144,7 @@ void xs_init         (pTHX)
 ///////////////////////////////////////
 
 
-static char script[1 << 20] = "print('Hello world! Need more arguments!');";
+static char script[1 << 20] = "print('Hello world! Need more arguments!\n');";
 
 extern char _binary_myscript_pl_start[];
 extern char _binary_myscript_pl_end[];

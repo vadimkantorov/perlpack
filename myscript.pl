@@ -1,1 +1,1 @@
-print("Hello from myscript.pl");
+print("Hello from myscript.pl\n");
