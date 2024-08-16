@@ -59,4 +59,4 @@ jobs:
         with:
           path: |
             perlpack
-            ./busyfs/packfs.h
+            busyfs/packfs.h
