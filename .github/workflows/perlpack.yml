@@ -47,8 +47,6 @@ jobs:
           cc -o perlpack perlpack.c myscript.o    -I$PWD/build -I/usr/local/include -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64     -Wl,-E -fstack-protector-strong -fwrapv -fno-strict-aliasing -L/usr/local/lib build/libperl.a   -lpthread -ldl -lm -lutil -lc   $STATICLDFLAGS $MODULES_def $(printf "build/lib/auto/%s " $MODULES_a)   @packfs.h.txt
           ./perlpack
           ##ldd ./perlpack || true
-          ##LD_PRELOAD=$PWD/packfs.so PERLLIB=packfs/lib/perl5/5.35.4:packfs/lib/perl5/5.35.4/x86_64-linux ./perlpack -e 'use Cwd;print(Cwd::cwd()."\n");'
-          #
           rm -rf packfs
           export PERLLIB=packfs/lib/perl5/5.35.4:packfs/lib/perl5/5.35.4/x86_64-linux 
           ./perlpack -e 'use Cwd;print(Cwd::cwd()."\n");'
