@@ -28,15 +28,8 @@ jobs:
           make miniperl generate_uudmap
           make perl
           make install
-           
-          rm -rf prefix/man prefix/lib/*/pod/ || true
-          find prefix/lib -name '*.pod' -delete
-          find prefix -type f
-          find -name '*.a'
-          find prefix -name '*.so'
-          find prefix -name config.h
           cd ../../..
-
+           
           ld -r -b binary -o myscript.o myscript.pl
 
           #for p in $(find build/native/perl/prefix/lib/ -name '*.a'); do echo $p; nm $p | grep boot; done
@@ -48,6 +41,13 @@ jobs:
       
       - name: Test Native Perl
         run: |
+          rm -rf build/native/perl/prefix/man build/native/perl/prefix/lib/*/pod/ || true
+          find build/native/perl/prefix/lib -name '*.pod' -delete
+          find build/native/perl/prefix -type f
+          find build/native/perl -name '*.a'
+          find build/native/perl/prefix -name '*.so'
+          find build/native/perl/prefix -name config.h
+
           find build
           git clone https://github.com/busytex/busyfs
           mv build/native/perl/prefix busyfs/dist-native
@@ -71,8 +71,8 @@ jobs:
           
           #LD_PRELOAD=$PWD/busyfs/packfs.so PERLLIB=dist-native/lib/perl5/5.35.4:dist-native/lib/perl5/5.35.4/x86_64-linux strace -ff -e trace=file,read,write,close  -perl -e 'use Cwd;'
           export PERL_DL_DEBUG=1
-          echo RUN1
-          PERLLIB=busyfs/dist-native/lib/perl5/5.35.4:busyfs/dist-native/lib/perl5/5.35.4/x86_64-linux strace -ff -e trace=file,read,write,close ./perlpack -e 'use Cwd;print(Cwd::cwd()."\n");'
+          #echo RUN1
+          #PERLLIB=busyfs/dist-native/lib/perl5/5.35.4:busyfs/dist-native/lib/perl5/5.35.4/x86_64-linux strace -ff -e trace=file,read,write,close ./perlpack -e 'use Cwd;print(Cwd::cwd()."\n");'
           echo RUN2
           LD_PRELOAD=$PWD/busyfs/packfs.so PERLLIB=dist-native/lib/perl5/5.35.4:dist-native/lib/perl5/5.35.4/x86_64-linux ./perlpack -e 'use Cwd;print(Cwd::cwd()."\n");'
        
