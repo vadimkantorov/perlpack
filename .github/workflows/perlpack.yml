@@ -24,7 +24,7 @@ jobs:
           tar -xf $(basename $URLPERL) --strip-components=1 --directory=build
           
           cd build
-          sh ./Configure -sde -Dman1dir=none -Dman3dir=none -Dprefix=../prefix -Aldflags=-lm -Accflags=-lm -Dstatic_ext="IO Fcntl  Cwd Opcode re mro B Socket POSIX attributes Storable Data/Dumper MIME/Base64 Digest/MD5 Digest/SHA Encode Encode/CN Encode/Unicode Encode/TW Encode/JP Encode/KR  Encode/Byte Encode/EBCDIC Encode/Symbol threads threads/shared Sys/Syslog Sys/Hostname Time/HiRes Time/Piece Unicode/Normalize Unicode/Collate Compress/Raw/Zlib Compress/Raw/Bzip2 PerlIO/scalar PerlIO/encoding PerlIO/via PerlIO/mmap Devel/Peek IPC/SysV File/Glob File/DosGlob Hash/Util Hash/Util/FieldHash Filter/Util/Call  I18N/Langinfo List/Util Math/BigInt/FastCalc SDBM_File" -Dusedevel -Dlibs="-lpthread -ldl -lm -lutil -lc"
+          sh ./Configure -sde -Dman1dir=none -Dman3dir=none -Dprefix=../packfs -Aldflags=-lm -Accflags=-lm -Dstatic_ext="IO Fcntl  Cwd Opcode re mro B Socket POSIX attributes Storable Data/Dumper MIME/Base64 Digest/MD5 Digest/SHA Encode Encode/CN Encode/Unicode Encode/TW Encode/JP Encode/KR  Encode/Byte Encode/EBCDIC Encode/Symbol threads threads/shared Sys/Syslog Sys/Hostname Time/HiRes Time/Piece Unicode/Normalize Unicode/Collate Compress/Raw/Zlib Compress/Raw/Bzip2 PerlIO/scalar PerlIO/encoding PerlIO/via PerlIO/mmap Devel/Peek IPC/SysV File/Glob File/DosGlob Hash/Util Hash/Util/FieldHash Filter/Util/Call  I18N/Langinfo List/Util Math/BigInt/FastCalc SDBM_File" -Dusedevel -Dlibs="-lpthread -ldl -lm -lutil -lc"
           make miniperl generate_uudmap
           make perl
           make install
@@ -37,16 +37,10 @@ jobs:
       
       - name: Test Native Perl
         run: |
-          mv prefix packfs
-          
-          rm -rf packfs/man packfs/lib/*/pod/ || true
-          find packfs -name '*.pod' -delete
-          find packfs -name '*.ld' -delete
-          find packfs -name '*.a' -delete
-          find packfs -name '*.h' -delete
+          rm -rf packfs/man packfs/lib/*/pod/
+          find packfs -name '*.pod' -o -name '*.ld' -o -name '*.a' -o -name '*.h' -delete
           python packfs.py -i packfs -o packfs.h
           cc -shared -fPIC packfs.c -o packfs.so -ldl @packfs.h.txt
-          find packfs -name '*.o' -delete
 
           #strace -ff -e trace=file,read,write,close
           LD_PRELOAD=$PWD/packfs.so PERLLIB=packfs/lib/perl5/5.35.4:packfs/lib/perl5/5.35.4/x86_64-linux ./perlpack -e 'use Cwd;print(Cwd::cwd()."\n");'
