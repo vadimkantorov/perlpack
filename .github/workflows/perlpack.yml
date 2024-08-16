@@ -37,10 +37,8 @@ jobs:
       
       - name: Test Native Perl
         run: |
-          git clone https://github.com/busytex/busyfs
-          mv prefix busyfs/packfs
+          mv prefix packfs
           
-          cd busyfs
           rm -rf packfs/man packfs/lib/*/pod/ || true
           find packfs -name '*.pod' -delete
           find packfs -name '*.ld' -delete
@@ -49,14 +47,13 @@ jobs:
           python packfs.py -i packfs -o packfs.h
           cc -shared -fPIC packfs.c -o packfs.so -ldl @packfs.h.txt
           find packfs -name '*.o' -delete
-          cd ..
 
           #strace -ff -e trace=file,read,write,close
-          LD_PRELOAD=$PWD/busyfs/packfs.so PERLLIB=packfs/lib/perl5/5.35.4:packfs/lib/perl5/5.35.4/x86_64-linux ./perlpack -e 'use Cwd;print(Cwd::cwd()."\n");'
+          LD_PRELOAD=$PWD/packfs.so PERLLIB=packfs/lib/perl5/5.35.4:packfs/lib/perl5/5.35.4/x86_64-linux ./perlpack -e 'use Cwd;print(Cwd::cwd()."\n");'
        
       - name: Artifacts
         uses: actions/upload-artifact@v4
         with:
           path: |
             perlpack
-            busyfs/packfs.h
+            packfs.h.txt
