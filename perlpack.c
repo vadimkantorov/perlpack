@@ -236,7 +236,7 @@ int fileno(FILE *stream)
 int open(const char *path, int flags, ...)
 {
     typedef int (*orig_func_type)(const char *path, int flags);
-    static orig_func_type orig_func = (orig_func_type)dlsym(RTLD_NEXT, "open");
+    orig_func_type orig_func = (orig_func_type)dlsym(RTLD_NEXT, "open");
 
     int res = packfs_open(path, NULL);
     if(res >= 0)
