@@ -91,7 +91,7 @@ void xs_init         (pTHX)
 
     newXS("mro::bootstrap", boot_mro , file);
     newXS("Devel::Peek", boot_Devel__Peek, file);
-    nexXS("File::DosGlob::bootstrap", boot_File__DosGlob , file);
+    newXS("File::DosGlob::bootstrap", boot_File__DosGlob , file);
     newXS("File::Glob::bootstrap", boot_File__Glob , file);
     newXS("Sys::Syslog::bootstrap", boot_Sys__Syslog, file);
     newXS("Sys::Hostname::bootstrap", boot_Sys__Hostname , file);
@@ -125,7 +125,7 @@ void xs_init         (pTHX)
     newXS("Encode::bootstrap", boot_Encode , file);
     newXS("Encode::JP::bootstrap", boot_Encode__JP , file);
     newXS("Encode::KR::bootstrap", boot_Encode__KR , file);
-    newXS("Encode::EBCDIC::bootstrap", boot_Encode_EBCDIC , file);
+    newXS("Encode::EBCDIC::bootstrap", boot_Encode__EBCDIC , file);
     newXS("Encode::CN::bootstrap", boot_Encode__CN , file);
     newXS("Encode::Symbol::bootstrap", boot_Encode__Symbol , file);
     newXS("Encode::Byte::bootstrap", boot_Encode__Byte , file);
