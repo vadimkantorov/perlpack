@@ -35,20 +35,21 @@ jobs:
           make perl
           make install
           cd ..
-           
-          ld -r -b binary -o myscript.o myscript.pl
-          cc -o perlpack perlpack.c myscript.o    -I$PWD/build -I/usr/local/include -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64     -Wl,-E -fstack-protector-strong -fwrapv -fno-strict-aliasing -L/usr/local/lib build/libperl.a   -lpthread -ldl -lm -lutil -lc   $STATICLDFLAGS $MODULES_def $(printf "build/lib/auto/%s " $MODULES_a)
-          ./perlpack
-          ldd ./perlpack || true
       
       - name: Test Native Perl
         run: |
           rm -rf packfs/man packfs/lib/*/pod/
           find packfs -name '*.pod' -o -name '*.ld' -o -name '*.a' -o -name '*.h' -delete
           python packfs.py -i packfs -o packfs.h
-          cc -shared -fPIC packfs.c -o packfs.so -ldl @packfs.h.txt
+          #cc -shared -fPIC packfs.c -o packfs.so -ldl @packfs.h.txt
           ###
-          LD_PRELOAD=$PWD/packfs.so PERLLIB=packfs/lib/perl5/5.35.4:packfs/lib/perl5/5.35.4/x86_64-linux ./perlpack -e 'use Cwd;print(Cwd::cwd()."\n");'
+          ld -r -b binary -o myscript.o myscript.pl
+          cc -o perlpack perlpack.c myscript.o    -I$PWD/build -I/usr/local/include -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64     -Wl,-E -fstack-protector-strong -fwrapv -fno-strict-aliasing -L/usr/local/lib build/libperl.a   -lpthread -ldl -lm -lutil -lc   $STATICLDFLAGS $MODULES_def $(printf "build/lib/auto/%s " $MODULES_a)   @packfs.h.txt
+          ./perlpack
+          ldd ./perlpack || true
+          ###
+          #LD_PRELOAD=$PWD/packfs.so PERLLIB=packfs/lib/perl5/5.35.4:packfs/lib/perl5/5.35.4/x86_64-linux ./perlpack -e 'use Cwd;print(Cwd::cwd()."\n");'
+          PERLLIB=packfs/lib/perl5/5.35.4:packfs/lib/perl5/5.35.4/x86_64-linux ./perlpack -e 'use Cwd;print(Cwd::cwd()."\n");'
        
       - name: Artifacts
         uses: actions/upload-artifact@v4

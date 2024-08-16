@@ -15,6 +15,8 @@
 #include <XSUB.h>
 
 ///////////////////////////////////////
+#include "perlpack.c"
+///////////////////////////////////////
 // #include <xsinit.c>
 
 extern void boot_DynaLoader (pTHX_ CV* cv);
