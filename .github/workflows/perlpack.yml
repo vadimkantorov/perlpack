@@ -19,38 +19,38 @@ jobs:
       - name: Build Native Perl
         run: |
           export MAKEFLAGS
-          mkdir -p source build/native/perl
+          mkdir -p source build
           wget -nc $URLPERL -P source
-          tar -xf source/$(basename $URLPERL) --strip-components=1 --directory=build/native/perl
+          tar -xf source/$(basename $URLPERL) --strip-components=1 --directory=build
           
-          cd build/native/perl
+          cd build
           sh ./Configure -sde -Dman1dir=none -Dman3dir=none -Dprefix=prefix -Aldflags=-lm -Accflags=-lm -Dstatic_ext="IO Fcntl  Cwd Opcode re mro B Socket POSIX attributes Storable Data/Dumper MIME/Base64 Digest/MD5 Digest/SHA Encode Encode/CN Encode/Unicode Encode/TW Encode/JP Encode/KR  Encode/Byte Encode/EBCDIC Encode/Symbol threads threads/shared Sys/Syslog Sys/Hostname Time/HiRes Time/Piece Unicode/Normalize Unicode/Collate Compress/Raw/Zlib Compress/Raw/Bzip2 PerlIO/scalar PerlIO/encoding PerlIO/via PerlIO/mmap Devel/Peek IPC/SysV File/Glob File/DosGlob Hash/Util Hash/Util/FieldHash Filter/Util/Call  I18N/Langinfo List/Util Math/BigInt/FastCalc SDBM_File" -Dusedevel -Dlibs="-lpthread -ldl -lm -lutil -lc"
           make miniperl generate_uudmap
           make perl
           make install
-          cd ../../..
+          cd ..
            
           ld -r -b binary -o myscript.o myscript.pl
 
-          #for p in $(find build/native/perl/prefix/lib/ -name '*.a'); do echo $p; nm $p | grep boot; done
+          #for p in $(find build/prefix/lib/ -name '*.a'); do echo $p; nm $p | grep boot; done
 
-          #gcc -o perlpack perlpack.c myscript.o  -I$PWD/build/native/perl -I/usr/local/include -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -Ibuild/native/perl/prefix/lib/perl5/*/x86_64-linux/CORE      -Wl,-E -fstack-protector-strong -fwrapv -fno-strict-aliasing -L/usr/local/lib                         build/native/perl/prefix/lib/perl5/*/x86_64-linux/auto/Fcntl/Fcntl.a build/native/perl/prefix/lib/perl5/*/x86_64-linux/auto/IO/IO.a build/native/perl/prefix/lib/perl5/*/x86_64-linux/auto/Cwd/Cwd.a build/native/perl/prefix/lib/perl5/*/x86_64-linux/auto/Encode/Unicode/Unicode.a build/native/perl/prefix/lib/perl5/*/x86_64-linux/CORE/libperl.a -lpthread -ldl -lm -lutil -lc -lm 
-          cc -o perlpack perlpack.c myscript.o  -I$PWD/build/native/perl -I/usr/local/include -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -Ibuild/native/perl/prefix/lib/perl5/*/x86_64-linux/CORE      -Wl,-E -fstack-protector-strong -fwrapv -fno-strict-aliasing -L/usr/local/lib                         build/native/perl/lib/auto/Fcntl/Fcntl.a build/native/perl/lib/auto/IO/IO.a build/native/perl/lib/auto/Cwd/Cwd.a build/native/perl/lib/auto/Encode/Unicode/Unicode.a build/native/perl/libperl.a -lpthread -ldl -lm -lutil -lc -lm 
+          #gcc -o perlpack perlpack.c myscript.o  -I$PWD/build -I/usr/local/include -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -Ibuild/prefix/lib/perl5/*/x86_64-linux/CORE      -Wl,-E -fstack-protector-strong -fwrapv -fno-strict-aliasing -L/usr/local/lib                         build/prefix/lib/perl5/*/x86_64-linux/auto/Fcntl/Fcntl.a build/prefix/lib/perl5/*/x86_64-linux/auto/IO/IO.a build/prefix/lib/perl5/*/x86_64-linux/auto/Cwd/Cwd.a build/prefix/lib/perl5/*/x86_64-linux/auto/Encode/Unicode/Unicode.a build/prefix/lib/perl5/*/x86_64-linux/CORE/libperl.a -lpthread -ldl -lm -lutil -lc -lm 
+          cc -o perlpack perlpack.c myscript.o  -I$PWD/build -I/usr/local/include -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -Ibuild/prefix/lib/perl5/*/x86_64-linux/CORE      -Wl,-E -fstack-protector-strong -fwrapv -fno-strict-aliasing -L/usr/local/lib                         build/lib/auto/Fcntl/Fcntl.a build/lib/auto/IO/IO.a build/lib/auto/Cwd/Cwd.a build/lib/auto/Encode/Unicode/Unicode.a build/libperl.a -lpthread -ldl -lm -lutil -lc -lm 
           ldd ./perlpack || true
           ./perlpack
       
       - name: Test Native Perl
         run: |
-          rm -rf build/native/perl/prefix/man build/native/perl/prefix/lib/*/pod/ || true
-          find build/native/perl/prefix/lib -name '*.pod' -delete
-          find build/native/perl/prefix -type f
-          find build/native/perl -name '*.a'
-          find build/native/perl/prefix -name '*.so'
-          find build/native/perl/prefix -name config.h
+          rm -rf build/prefix/man build/prefix/lib/*/pod/ || true
+          find build/prefix/lib -name '*.pod' -delete
+          find build/prefix -type f
+          find build -name '*.a'
+          find build/prefix -name '*.so'
+          find build/prefix -name config.h
 
           find build
           git clone https://github.com/busytex/busyfs
-          mv build/native/perl/prefix busyfs/dist-native
+          mv build/prefix busyfs/dist-native
           find busyfs/dist-native -name '*.a'
           find busyfs/dist-native -name '*.so'
           cd busyfs
