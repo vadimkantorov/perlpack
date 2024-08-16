@@ -249,6 +249,7 @@ int fileno(FILE *stream)
     return res;
 }
 
+/*
 int open(const char *path, int flags, ...)
 {
     typedef int (*orig_func_type)(const char *path, int flags);
@@ -269,6 +270,7 @@ int open(const char *path, int flags, ...)
 #endif
     return res;
 }
+*/
 
 // https://en.cppreference.com/w/c/io/fread
 ssize_t read(int fd, void* buf, size_t count)
