@@ -83,12 +83,62 @@ void xs_init         (pTHX)
     // https://github.com/xsawyerx/xs-fun
     // https://perldoc.perl.org/perlxs
     // https://perldoc.perl.org/perlapi
-    newXS("Fcntl::bootstrap", boot_Fcntl, file);
-    newXS("IO::bootstrap", boot_IO, file);
-    newXS("Cwd::bootstrap", boot_Cwd, file);
-    newXS("Encode::Unicode::bootstrap", boot_Encode__Unicode, file);
-    
+    //newXS("Fcntl::bootstrap", boot_Fcntl, file);
+    //newXS("IO::bootstrap", boot_IO, file);
+    //newXS("Cwd::bootstrap", boot_Cwd, file);
+    //newXS("Encode::Unicode::bootstrap", boot_Encode__Unicode, file);
+   
 
+    newXS("mro::bootstrap", boot_mro , file);
+    newXS("Devel::Peek", boot_Devel__Peek, file);
+    nexXS("File::DosGlob::bootstrap", boot_File__DosGlob , file);
+    newXS("File::Glob::bootstrap", boot_File__Glob , file);
+    newXS("Sys::Syslog::bootstrap", boot_Sys__Syslog, file);
+    newXS("Sys::Hostname::bootstrap", boot_Sys__Hostname , file);
+    newXS("PerlIO::via::bootstrap", boot_PerlIO__via , file);
+    newXS("PerlIO::mmap::bootstrap", boot_PerlIO__mmap , file);
+    newXS("PerlIO::encoding::bootstrap", boot_PerlIO__encoding , file);
+    newXS("PerlIO::scalar::bootstrap", boot_PerlIO__scalar , file);
+    newXS("B::bootstrap", boot_B , file);
+    newXS("attributes::bootstrap", boot_attributes , file);
+    newXS("Unicode::Normalize::bootstrap", boot_Unicode__Normalize , file);
+    newXS("Unicode::Collate::bootstrap", boot_Unicode__Collate , file);
+    newXS("threads::bootstrap", boot_threads , file);
+    newXS("threads::shared::bootstrap", boot_threads__shared , file);
+    newXS("IPC::SysV::bootstrap", boot_IPC__SysV , file);
+    newXS("re::bootstrap", boot_re , file);
+    newXS("Digest::MD5::bootstrap", boot_Digest__MD5 , file);
+    newXS("Digest::SHA::bootstrap", boot_Digest__SHA , file);
+    newXS("SDBM_File::bootstrap", boot_SDBM_File , file);
+    newXS("Math::BigInt::FastCalc::bootstrap", boot_Math__BigInt__FastCalc , file);
+    newXS("Data::Dumper::bootstrap", boot_Data__Dumper , file);
+    newXS("I18N::Langinfo::bootstrap", boot_I18N__Langinfo , file);
+    newXS("Time::HiRes::bootstrap", boot_Time__HiRes , file);
+    newXS("Time::Piece::bootstrap", boot_Time__Piece , file);
+    newXS("IO::bootstrap", boot_IO , file);
+    newXS("Socket::bootstrap", boot_Socket , file);
+    newXS("Hash::Util::FieldHash::bootstrap",boot_Hash__Util__FieldHash , file); 
+    newXS("Hash::Util::bootstrap", boot_Hash__Util , file);
+    newXS("Filter::Util::Call::bootstrap", boot_Filter__Util__Call , file);
+    newXS("POSIX::bootstrap", boot_POSIX , file);
+    newXS("Encode::Unicode::bootstrap", boot_Encode__Unicode , file);
+    newXS("Encode::bootstrap", boot_Encode , file);
+    newXS("Encode::JP::bootstrap", boot_Encode__JP , file);
+    newXS("Encode::KR::bootstrap", boot_Encode__KR , file);
+    newXS("Encode::EBCDIC::bootstrap", boot_Encode_EBCDIC , file);
+    newXS("Encode::CN::bootstrap", boot_Encode__CN , file);
+    newXS("Encode::Symbol::bootstrap", boot_Encode__Symbol , file);
+    newXS("Encode::Byte::bootstrap", boot_Encode__Byte , file);
+    newXS("Encode::TW::bootstrap", boot_Encode__TW , file);
+    newXS("Compress::Raw::Zlib::bootstrap", boot_Compress__Raw__Zlib , file);
+    newXS("Compress::Raw::Bzip2::bootstrap", boot_Compress__Raw__Bzip2 , file);
+    newXS("MIME::Base64::bootstrap", boot_MIME__Base64 , file);
+    newXS("Cwd::bootstrap", boot_Cwd , file);
+    newXS("Storable::bootstrap", boot_Storable , file);
+    newXS("List::Util::bootstrap", boot_List__Util , file);
+    newXS("Fcntl::bootstrap", boot_Fcntl , file);
+    newXS("Opcode::bootstrap", boot_Opcode , file);
+    
     newXS("DynaLoader::boot_DynaLoader", boot_DynaLoader, file);
 }
 ///////////////////////////////////////
