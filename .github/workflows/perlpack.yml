@@ -46,17 +46,12 @@ jobs:
       
       - name: Test Native Perl
         run: |
-          rm -rf prefix/man prefix/lib/*/pod/ || true
-          find prefix/lib -name '*.pod' -delete
-          #find build -name '*.a'
-          #find prefix -name '*.so'
-          #find prefix -name config.h
-
           git clone https://github.com/busytex/busyfs
           mv prefix busyfs/packfs
-          #find busyfs/packfs -name '*.a'
-          #find busyfs/packfs -name '*.so'
+          
           cd busyfs
+          rm -rf packfs/man packfs/lib/*/pod/ || true
+          find packfs -name '*.pod' -delete
           find packfs -name '*.ld' -delete
           find packfs -name '*.a' -delete
           find packfs -name '*.h' -delete
@@ -65,24 +60,13 @@ jobs:
           find packfs -name '*.o' -delete
           cd ..
 
-          #strace -ff -e trace=file,read,write,close perl -e 'use Cwd;' 
-          #cc -shared -fPIC log_file_access_dynamic.c -o log_file_access_dynamic.so -ldl
-          #LD_PRELOAD=$PWD/log_file_access_dynamic.so perl -e 'use Cwd;'  #./perlpack myscript.pl --help 
-          
-          #LD_PRELOAD=$PWD/busyfs/packfs.so strace -ff -e trace=file,read,write,close perl -e 'open (FILE, "packfs/lib/perl5/5.35.4/x86_64-linux/Cwd.pm"); print <FILE>;'
-          #LD_PRELOAD=$PWD/busyfs/packfs.so perl -e 'open (FILE, "packfs/lib/perl5/5.35.4/x86_64-linux/Cwd.pm"); print <FILE>;'
-          
-          #LD_PRELOAD=$PWD/busyfs/packfs.so PERLLIB=packfs/lib/perl5/5.35.4:packfs/lib/perl5/5.35.4/x86_64-linux strace -ff -e trace=file,read,write,close  -perl -e 'use Cwd;'
           export PERL_DL_DEBUG=1
-          #echo RUN1
-          #PERLLIB=busyfs/packfs/lib/perl5/5.35.4:busyfs/packfs/lib/perl5/5.35.4/x86_64-linux strace -ff -e trace=file,read,write,close ./perlpack -e 'use Cwd;print(Cwd::cwd()."\n");'
-          echo RUN2
+          #strace -ff -e trace=file,read,write,close
           LD_PRELOAD=$PWD/busyfs/packfs.so PERLLIB=packfs/lib/perl5/5.35.4:packfs/lib/perl5/5.35.4/x86_64-linux ./perlpack -e 'use Cwd;print(Cwd::cwd()."\n");'
        
       - name: Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: artifacts
           path: |
-            busyfs/
-            build/
+            perlpack
+            ./busyfs/packfs.h.txt
