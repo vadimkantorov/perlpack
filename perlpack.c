@@ -56,7 +56,7 @@ int main(int argc, char **argv)
         strncpy(script,    _binary_myscript_pl_start, iSize);
         script[iSize] = '\0';
     }
-    else if(args > 2 && 0 == strcmp("-e", argv[1]))
+    else if(argc > 2 && 0 == strcmp("-e", argv[1]))
     {
         strcpy(script, argv[2]);
     }
