@@ -17,6 +17,8 @@
 ///////////////////////////////////////
 #ifdef PACKFS_DYNAMIC
 
+#include "perlpack.h"
+
 #define _GNU_SOURCE
 #include <string.h>
 #include <stdio.h>
@@ -40,8 +42,6 @@
 #define packfs_filefd_min 1000000000
 #define packfs_filefd_max 1000001000
 #define packfs_filefd_cnt (packfs_filefd_max - packfs_filefd_min)
-
-#include "packfs.h"
 
 int packfs_filecnt;
 int packfs_filefd[packfs_filefd_cnt];
