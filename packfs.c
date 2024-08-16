@@ -249,7 +249,7 @@ int fileno(FILE *stream)
     return res;
 }
 
-int open(const char *path, int flags)
+int open(const char *path, int flags, ...)
 {
     typedef int (*orig_func_type)(const char *path, int flags);
     orig_func_type orig_func = (orig_func_type)dlsym(RTLD_NEXT, "open");
