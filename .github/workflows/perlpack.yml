@@ -39,7 +39,9 @@ jobs:
           find build -name '*.h'
           echo END
           
-          cc -o perlpack perlpack.c myscript.o  -I$PWD/build -I/usr/local/include -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -Ibuild/prefix/lib/perl5/*/x86_64-linux/CORE      -Wl,-E -fstack-protector-strong -fwrapv -fno-strict-aliasing -L/usr/local/lib                         build/lib/auto/Fcntl/Fcntl.a build/lib/auto/IO/IO.a build/lib/auto/Cwd/Cwd.a build/lib/auto/Encode/Unicode/Unicode.a build/libperl.a -lpthread -ldl -lm -lutil -lc -lm 
+          # -Ibuild/prefix/lib/perl5/*/x86_64-linux/CORE
+          #mv build/prefix .
+          cc -o perlpack perlpack.c myscript.o  -I$PWD/build -I/usr/local/include -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64     -Wl,-E -fstack-protector-strong -fwrapv -fno-strict-aliasing -L/usr/local/lib                         build/lib/auto/Fcntl/Fcntl.a build/lib/auto/IO/IO.a build/lib/auto/Cwd/Cwd.a build/lib/auto/Encode/Unicode/Unicode.a build/libperl.a -lpthread -ldl -lm -lutil -lc -lm 
           ldd ./perlpack || true
           ./perlpack
       
