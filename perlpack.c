@@ -17,22 +17,78 @@
 ///////////////////////////////////////
 // #include <xsinit.c>
 
-extern void boot_Fcntl      (pTHX_ CV* cv);
-extern void boot_IO         (pTHX_ CV* cv);
-extern void boot_Cwd        (pTHX_ CV* cv);
 extern void boot_DynaLoader (pTHX_ CV* cv);
 
+extern void boot_mro(pTHX_ CV* cv);
+extern void boot_Devel__Peek(pTHX_ CV* cv);
+extern void boot_File__DosGlob(pTHX_ CV* cv);
+extern void boot_File__Glob(pTHX_ CV* cv);
+extern void boot_Sys__Syslog(pTHX_ CV* cv);
+extern void boot_Sys__Hostname(pTHX_ CV* cv);
+extern void boot_PerlIO__via(pTHX_ CV* cv);
+extern void boot_PerlIO__mmap(pTHX_ CV* cv);
+extern void boot_PerlIO__encoding(pTHX_ CV* cv);
+extern void boot_PerlIO__scalar(pTHX_ CV* cv);
+extern void boot_B(pTHX_ CV* cv);
+extern void boot_attributes(pTHX_ CV* cv);
+extern void boot_Unicode__Normalize(pTHX_ CV* cv);
+extern void boot_Unicode__Collate(pTHX_ CV* cv);
+extern void boot_threads(pTHX_ CV* cv);
+extern void boot_threads__shared(pTHX_ CV* cv);
+extern void boot_IPC__SysV(pTHX_ CV* cv);
+extern void boot_re(pTHX_ CV* cv);
+extern void boot_Digest__MD5(pTHX_ CV* cv);
+extern void boot_Digest__SHA(pTHX_ CV* cv);
+extern void boot_SDBM_File(pTHX_ CV* cv);
+extern void boot_Math__BigInt__FastCalc(pTHX_ CV* cv);
+extern void boot_Data__Dumper(pTHX_ CV* cv);
+extern void boot_I18N__Langinfo(pTHX_ CV* cv);
+extern void boot_Time__HiRes(pTHX_ CV* cv);
+extern void boot_Time__Piece(pTHX_ CV* cv);
+extern void boot_IO(pTHX_ CV* cv);
+extern void boot_Socket(pTHX_ CV* cv);
+extern void boot_Hash__Util__FieldHash(pTHX_ CV* cv);
+extern void boot_Hash__Util(pTHX_ CV* cv);
+extern void boot_Filter__Util__Call(pTHX_ CV* cv);
+extern void boot_POSIX(pTHX_ CV* cv);
+extern void boot_Encode__Unicode(pTHX_ CV* cv);
+extern void boot_Encode(pTHX_ CV* cv);
+extern void boot_Encode__JP(pTHX_ CV* cv);
+extern void boot_Encode__KR(pTHX_ CV* cv);
+extern void boot_Encode__EBCDIC(pTHX_ CV* cv);
+extern void boot_Encode__CN(pTHX_ CV* cv);
+extern void boot_Encode__Symbol(pTHX_ CV* cv);
+extern void boot_Encode__Byte(pTHX_ CV* cv);
+extern void boot_Encode__TW(pTHX_ CV* cv);
+extern void boot_Compress__Raw__Zlib(pTHX_ CV* cv);
+extern void boot_Compress__Raw__Bzip2(pTHX_ CV* cv);
+extern void boot_MIME__Base64(pTHX_ CV* cv);
+extern void boot_Cwd(pTHX_ CV* cv);
+extern void boot_Storable(pTHX_ CV* cv);
+extern void boot_List__Util(pTHX_ CV* cv);
+extern void boot_Fcntl(pTHX_ CV* cv);
+extern void boot_Opcode(pTHX_ CV* cv);
+
+
+
+
 //EXTERN_C void xs_init         (pTHX);
-//EXTERN_C 
 void xs_init         (pTHX)
 {
     static const char file[] = __FILE__;
     dXSUB_SYS;
     PERL_UNUSED_CONTEXT;
-
+    
+    // https://medium.com/booking-com-development/native-extensions-for-perl-without-smoke-and-mirrors-40479999dfc8
+    // https://github.com/xsawyerx/xs-fun
+    // https://perldoc.perl.org/perlxs
+    // https://perldoc.perl.org/perlapi
     newXS("Fcntl::bootstrap", boot_Fcntl, file);
     newXS("IO::bootstrap", boot_IO, file);
     newXS("Cwd::bootstrap", boot_Cwd, file);
+    newXS("Encode::Unicode::bootstrap", boot_Encode__Unicode, file);
+    
+
     newXS("DynaLoader::boot_DynaLoader", boot_DynaLoader, file);
 }
 ///////////////////////////////////////
