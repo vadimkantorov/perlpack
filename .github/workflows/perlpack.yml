@@ -22,15 +22,15 @@ jobs:
 
       - uses: actions/checkout@v4
 
-      - name: Build libc_origio.a
+      - name: Build libc_perlpack.a
         run: |
-          cp $(cc -print-file-name=libc.a) libc_origio.a
-          echo BEFOREPATCHINGBEGIN; nm libc_origio.a; echo BEFOREPATCHINGEND
-          ar x libc_origio.a fopen.lo open.lo
+          cp $(cc -print-file-name=libc.a) libc_perlpack.a
+          echo BEFOREPATCHINGBEGIN; nm libc_perlpack.a; echo BEFOREPATCHINGEND
+          ar x libc_perlpack.a fopen.lo open.lo
           objcopy --redefine-sym fopen=orig_fopen fopen.lo
           objcopy --redefine-sym open=orig_open    open.lo
-          ar rs libc_origio.a fopen.lo open.lo
-          echo AFTERPATCHINGBEGIN; nm libc_origio.a; echo AFTERPATCHINGEND
+          ar rs libc_perlpack.a fopen.lo open.lo
+          echo AFTERPATCHINGBEGIN; nm libc_perlpack.a; echo AFTERPATCHINGEND
 
       - name: Build Native Perl
         run: |
@@ -66,3 +66,4 @@ jobs:
           path: |
             perlpack
             perlpack.h
+            libc_perlpack.a
