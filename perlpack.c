@@ -12,6 +12,7 @@
 #include <errno.h>
 #include <dlfcn.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <assert.h>
 
 #include <sys/stat.h>
@@ -35,7 +36,6 @@ extern char _binary_myscript_pl_end[];
 #define packfs_filefd_max 1000001000
 #define packfs_filefd_cnt (packfs_filefd_max - packfs_filefd_min)
 
-int packfs_filecnt;
 int packfs_filefd[packfs_filefd_cnt];
 FILE* packfs_fileptr[packfs_filefd_cnt];
 
@@ -225,10 +225,47 @@ int fileno(FILE *stream)
 }
 
 
+typedef int (*orig_func_type_open)(const char *path, int flags);
+
+struct packfs_context
+{
+    orig_func_type_open open;
+};
+
+packfs_context packfs_ensure_context()
+{
+    static packfs_context packfs_ctx;
+    static bool packfs_initialized = false;
+    if(!packfs_initialized)
+    {
+        packfs_ctx = {(orig_func_type_open)dlsym(RTLD_NEXT, "open")};
+        packfs_initialized = true;
+    }
+    
+    return packfs_ctx;
+}
+
+typedef int (*orig_func_type_open)(const char *path, int flags);
+typedef struct 
+{
+    orig_func_type_open orig_open;
+} packfs_context;
+packfs_context packfs_ensure_context()
+{
+    static packfs_context packfs_ctx;
+    static bool packfs_initialized = false;
+    if(!packfs_initialized)
+    {
+        packfs_ctx.orig_open = dlsym(RTLD_NEXT, "open"); //(orig_func_type_open)
+        packfs_initialized = true;
+    }
+    return packfs_ctx;
+}
+
+
 int open(const char *path, int flags, ...)
 {
-    typedef int (*orig_func_type)(const char *path, int flags);
-    orig_func_type orig_func = (orig_func_type)dlsym(RTLD_NEXT, "open");
+    packfs_context packfs_ctx = packfs_ensure_context();
 
     int res = packfs_open(path, NULL);
     if(res >= 0)
@@ -239,7 +276,7 @@ int open(const char *path, int flags, ...)
         return res;
     }
     
-    res = orig_func(path, flags);
+    res = packfs_ctx.orig_open(path, flags);
 #ifdef PACKFS_LOG
     fprintf(stderr, "packfs: open(\"%s\", %d) == %d\n", path, flags, res);
 #endif
