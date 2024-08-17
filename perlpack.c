@@ -49,6 +49,7 @@ typedef struct
     int (*orig_access)(const char *path, int flags);
     off_t (*orig_lseek)(int fd, off_t offset, int whence);
     int (*orig_stat)(const char *restrict path, struct stat *restrict statbuf);
+    FILE* (*orig_fopen)(const char *path, const char *mode);
     int (*orig_fileno)(FILE* stream);
 
 } packfs_context;
