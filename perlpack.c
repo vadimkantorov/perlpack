@@ -39,6 +39,38 @@ extern char _binary_myscript_pl_end[];
 int packfs_filefd[packfs_filefd_cnt];
 FILE* packfs_fileptr[packfs_filefd_cnt];
 
+typedef struct
+{
+    bool initialized;
+    
+    int (*orig_open)(const char *path, int flags);
+    int (*orig_close)(int fd);
+    ssize_t (*orig_read)(int fd, void* buf, size_t count);
+    int (*orig_access)(const char *path, int flags);
+    off_t (*orig_lseek)(int fd, off_t offset, int whence);
+    int (*orig_stat)(const char *restrict path, struct stat *restrict statbuf);
+    int (*orig_fileno)(FILE* stream);
+
+} packfs_context;
+
+packfs_context packfs_ensure_context()
+{
+    static packfs_context packfs_ctx = {0};
+    if(!packfs_ctx.initialized)
+    {
+        packfs_ctx.orig_open = dlsym(RTLD_NEXT, "open");
+        packfs_ctx.orig_close = dlsym(RTLD_NEXT, "close");
+        packfs_ctx.orig_read = dlsym(RTLD_NEXT, "read");
+        packfs_ctx.orig_access = dlsym(RTLD_NEXT, "access");
+        packfs_ctx.orig_lseek = dlsym(RTLD_NEXT, "lseek");
+        packfs_ctx.orig_stat = dlsym(RTLD_NEXT, "stat");
+        packfs_ctx.orig_fopen = dlsym(RTLD_NEXT, "fopen");
+        packfs_ctx.orig_fileno = dlsym(RTLD_NEXT, "fileno");
+        packfs_ctx.initialized = true;
+    }
+    return packfs_ctx;
+}
+
 const char* packfs_sanitize_path(const char* path)
 {
     return (path != NULL && strlen(path) > 2 && path[0] == '.' && path[1] == '/') ? (path + 2) : path;
@@ -182,8 +214,7 @@ int packfs_stat(const char* path, struct stat *restrict statbuf)
 
 FILE* fopen(const char *path, const char *mode)
 {
-    typedef FILE* (*orig_fopen_func_type)(const char *path, const char *mode);
-    orig_fopen_func_type orig_func = (orig_fopen_func_type)dlsym(RTLD_NEXT, "fopen");
+    packfs_context packfs_ctx = packfs_ensure_context();
     
     FILE* res = NULL;
     if(packfs_open(path, &res) >= 0)
@@ -194,7 +225,7 @@ FILE* fopen(const char *path, const char *mode)
         return res;
     }
 
-    res = orig_func(path, mode);
+    res = packfs_ctx.orig_fopen(path, mode);
 #ifdef PACKFS_LOG
     fprintf(stderr, "packfs: fopen(\"%s\", \"%s\") == %p\n", path, mode, (void*)res);
 #endif
@@ -203,12 +234,11 @@ FILE* fopen(const char *path, const char *mode)
 
 int fileno(FILE *stream)
 {
-    typedef int (*orig_func_type)(FILE* stream);
-    orig_func_type orig_func = (orig_func_type)dlsym(RTLD_NEXT, "fileno");
+    packfs_context packfs_ctx = packfs_ensure_context();
     
     if(!stream) return -1;
     
-    int res = orig_func(stream);
+    int res = packfs_ctx.orig_fileno(stream);
 #ifdef PACKFS_LOG
     fprintf(stderr, "packfs: fileno(%p) == %d\n", (void*)stream, res);
 #endif
@@ -224,28 +254,6 @@ int fileno(FILE *stream)
     return res;
 }
 
-
-//typedef int (*orig_func_type_open)(const char *path, int flags);
-
-typedef struct
-{
-    bool initialized;
-    //orig_func_type_open orig_open;
-    
-    int (*orig_open)(const char *path, int flags);
-
-} packfs_context;
-
-packfs_context packfs_ensure_context()
-{
-    static packfs_context packfs_ctx = {0};
-    if(!packfs_ctx.initialized)
-    {
-        packfs_ctx.orig_open = dlsym(RTLD_NEXT, "open"); //(orig_func_type_open)
-        packfs_ctx.initialized = true;
-    }
-    return packfs_ctx;
-}
 
 int open(const char *path, int flags, ...)
 {
@@ -269,9 +277,8 @@ int open(const char *path, int flags, ...)
 
 int close(int fd)
 {
-    typedef int (*orig_func_type)(int fd);
-    orig_func_type orig_func = (orig_func_type)dlsym(RTLD_NEXT, "close");
-
+    packfs_context packfs_ctx = packfs_ensure_context();
+    
     int res = packfs_close(fd);
     if(res >= -1)
     {
@@ -281,7 +288,7 @@ int close(int fd)
         return res;
     }
     
-    res = orig_func(fd);
+    res = packfs_ctx.orig_close(fd);
 #ifdef PACKFS_LOG
     fprintf(stderr, "packfs: close(%d) == %d\n", fd, res);
 #endif
@@ -292,9 +299,8 @@ int close(int fd)
 // https://en.cppreference.com/w/c/io/fread
 ssize_t read(int fd, void* buf, size_t count)
 {
-    typedef ssize_t (*orig_func_type)(int fd, void* buf, size_t count);
-    orig_func_type orig_func = (orig_func_type)dlsym(RTLD_NEXT, "read");
-
+    packfs_context packfs_ctx = packfs_ensure_context();
+    
     ssize_t res = packfs_read(fd, buf, count);
     if(res >= 0)
     {
@@ -304,7 +310,7 @@ ssize_t read(int fd, void* buf, size_t count)
         return res;
     }
 
-    res = orig_func(fd, buf, count);
+    res = packfs_ctx.orig_read(fd, buf, count);
 #ifdef PACKFS_LOG
     fprintf(stderr, "packfs: read(%d, %p, %zu) == %d\n", fd, buf, count, (int)res);
 #endif
@@ -313,8 +319,7 @@ ssize_t read(int fd, void* buf, size_t count)
 
 off_t lseek(int fd, off_t offset, int whence)
 {
-    typedef off_t (*orig_func_type)(int fd, off_t offset, int whence);
-    orig_func_type orig_func = (orig_func_type)dlsym(RTLD_NEXT, "lseek");
+    packfs_context packfs_ctx = packfs_ensure_context();
     
     int res = packfs_seek(fd, (long)offset, whence);
     if(res >= 0)
@@ -325,7 +330,7 @@ off_t lseek(int fd, off_t offset, int whence)
         return res;
     }
 
-    res = orig_func(fd, offset, whence);
+    res = packfs_ctx.orig_lseek(fd, offset, whence);
 #ifdef PACKFS_LOG
     fprintf(stderr, "packfs: seek(%d, %d, %d) == %d\n", fd, (int)offset, whence, (int)res);
 #endif
@@ -335,9 +340,8 @@ off_t lseek(int fd, off_t offset, int whence)
 
 int access(const char *path, int flags) 
 {
-    typedef int (*orig_func_type)(const char *path, int flags);
-    orig_func_type orig_func = (orig_func_type)dlsym(RTLD_NEXT, "access");
-   
+    packfs_context packfs_ctx = packfs_ensure_context();
+    
     int res = packfs_access(path);
     if(res >= -1)
     {
@@ -347,7 +351,7 @@ int access(const char *path, int flags)
         return res;
     }
     
-    res = orig_func(path, flags); 
+    res = packfs_ctx.orig_access(path, flags); 
 #ifdef PACKFS_LOG
     fprintf(stderr, "packfs: access(\"%s\", %d) == %d\n", path, flags, res);
 #endif
@@ -356,8 +360,7 @@ int access(const char *path, int flags)
 
 int stat(const char *restrict path, struct stat *restrict statbuf)
 {
-    typedef int (*orig_func_type)(const char *restrict path, struct stat *restrict statbuf);
-    orig_func_type orig_func = (orig_func_type)dlsym(RTLD_NEXT, "stat");
+    packfs_context packfs_ctx = packfs_ensure_context();
     
     int res = packfs_stat(path, statbuf);
     if(res >= -1)
@@ -368,7 +371,7 @@ int stat(const char *restrict path, struct stat *restrict statbuf)
         return res;
     }
 
-    res = orig_func(path, statbuf);
+    res = packfs_ctx.orig_stat(path, statbuf);
 #ifdef PACKFS_LOG
     fprintf(stderr, "packfs: stat(\"%s\", %p) == %d\n", path, (void*)statbuf, res);
 #endif
@@ -709,6 +712,9 @@ int main(int argc, char *argv[], char* envp[])
     {
         strcpy(script, argv[2]);
     }
+    
+    packfs_ensure_context();
+
     PERL_SYS_INIT3(&argc, &argv, &envp);
     PerlInterpreter* myperl = perl_alloc();
     if(!myperl) return -1;
