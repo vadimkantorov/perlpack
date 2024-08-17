@@ -697,6 +697,7 @@ int main(int argc, char **argv, char** env)
         strcpy(script, argv[2]);
     }
     
+    // https://perldoc.perl.org/perlembed
     int res = 0;
     PERL_SYS_INIT3(&argc, &argv, &env);
     PerlInterpreter* my_perl = perl_alloc();
