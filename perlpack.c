@@ -29,15 +29,7 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 
-#define packfs_string_value_(x) #x
-#define packfs_string_value(x) packfs_string_value_(x)
-
-#ifdef PACKFS_PREFIX
-#define packfs_prefix packfs_string_value(PACKFS_PREFIX)
-#else
 #define packfs_prefix "/mnt/perlpack/"
-#endif
-
 
 #define packfs_filefd_min 1000000000
 #define packfs_filefd_max 1000001000
