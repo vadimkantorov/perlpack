@@ -85,19 +85,19 @@ int packfs_open(const char* path, FILE** out)
 int packfs_close(int fd)
 {
     if(fd < packfs_filefd_min || fd >= packfs_filefd_max)
-        return -1;
+        return -2;
 
     for(int k = 0; k < packfs_filefd_max - packfs_filefd_min; k++)
     {
         if(packfs_filefd[k] == fd)
         {
             packfs_filefd[k] = 0;
-            fclose(packfs_fileptr[k]);
+            int res = fclose(packfs_fileptr[k]);
             packfs_fileptr[k] = NULL;
-            return 0;
+            return res;
         }
     }
-    return -1;
+    return -2;
 }
 
 FILE* packfs_findptr(int fd)
@@ -250,6 +250,27 @@ int open(const char *path, int flags, ...)
     res = orig_func(path, flags);
 #ifdef PACKFS_LOG
     fprintf(stderr, "packfs: open(\"%s\", %d) == %d\n", path, flags, res);
+#endif
+    return res;
+}
+
+int close(int fd)
+{
+    typedef int (*orig_func_type)(int fd);
+    orig_func_type orig_func = (orig_func_type)dlsym(RTLD_NEXT, "close");
+
+    int res = packfs_close(fd);
+    if(res >= -1)
+    {
+#ifdef PACKFS_LOG
+        fprintf(stderr, "packfs: Close(%d) == %d\n", fd, res);
+#endif
+        return res;
+    }
+    
+    res = orig_func(fd);
+#ifdef PACKFS_LOG
+    fprintf(stderr, "packfs: close(%d) == %d\n", fd, res);
 #endif
     return res;
 }
