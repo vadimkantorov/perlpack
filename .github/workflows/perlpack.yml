@@ -22,7 +22,7 @@ jobs:
 
       - uses: actions/checkout@v4
 
-      - name: Build Native Perl
+      - name: Build libc_origio.a
         run: |
           cp $(cc -print-file-name=libc.a) libc_origio.a
           echo BEFOREPATCHINGBEGIN; nm libc_origio.a; echo BEFOREPATCHINGEND
@@ -32,6 +32,8 @@ jobs:
           ar rs libc_origio.a fopen.lo open.lo
           echo AFTERPATCHINGBEGIN; nm libc_origio.a; echo AFTERPATCHINGEND
 
+      - name: Build Native Perl
+        run: |
           export MAKEFLAGS
           mkdir build
           wget -nc $URLPERL
