@@ -225,12 +225,15 @@ int fileno(FILE *stream)
 }
 
 
-typedef int (*orig_func_type_open)(const char *path, int flags);
+//typedef int (*orig_func_type_open)(const char *path, int flags);
 
 typedef struct
 {
     bool initialized;
-    orig_func_type_open orig_open;
+    //orig_func_type_open orig_open;
+    
+    int (*orig_open)(const char *path, int flags);
+
 } packfs_context;
 
 packfs_context packfs_ensure_context()
