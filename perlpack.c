@@ -230,7 +230,7 @@ typedef int (*orig_func_type_open)(const char *path, int flags);
 typedef struct
 {
     bool initialized;
-    orig_func_type_open open;
+    orig_func_type_open orig_open;
 } packfs_context;
 
 packfs_context packfs_ensure_context()
