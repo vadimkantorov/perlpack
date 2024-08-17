@@ -694,8 +694,8 @@ int main(int argc, char *argv[], char* envp[])
 
     perl_construct(myperl);
     PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
-    char *myperl_argv[] = { "perlpack", "-V", "-e", script, "--", argv[2], NULL };
-    int myperl_argc = 6;
+    char *myperl_argv[] = { "perlpack", "-e", script, "--", argv[2], NULL };
+    int myperl_argc = sizeof(myperl_argv) / sizeof(myperl_argv[0]) - 1;
     int res = perl_parse(myperl, xs_init, myperl_argc, myperl_argv, envp);
     if(res == 0) res = perl_run(myperl); // error if res != 0 (or stricter in case exit(0) was called from perl code): (res & 0xFF) != 0: 
 
