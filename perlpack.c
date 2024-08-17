@@ -227,11 +227,11 @@ int fileno(FILE *stream)
 
 typedef int (*orig_func_type_open)(const char *path, int flags);
 
-struct packfs_context
+typedef struct
 {
     bool initialized;
     orig_func_type_open open;
-};
+} packfs_context;
 
 packfs_context packfs_ensure_context()
 {
