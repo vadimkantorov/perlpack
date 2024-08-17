@@ -229,39 +229,20 @@ typedef int (*orig_func_type_open)(const char *path, int flags);
 
 struct packfs_context
 {
+    bool initialized;
     orig_func_type_open open;
 };
 
 packfs_context packfs_ensure_context()
 {
-    static packfs_context packfs_ctx;
-    static bool packfs_initialized = false;
-    if(!packfs_initialized)
-    {
-        packfs_ctx = {(orig_func_type_open)dlsym(RTLD_NEXT, "open")};
-        packfs_initialized = true;
-    }
-    
-    return packfs_ctx;
-}
-
-typedef int (*orig_func_type_open)(const char *path, int flags);
-typedef struct 
-{
-    orig_func_type_open orig_open;
-} packfs_context;
-packfs_context packfs_ensure_context()
-{
-    static packfs_context packfs_ctx;
-    static bool packfs_initialized = false;
-    if(!packfs_initialized)
+    static packfs_context packfs_ctx = {0};
+    if(!packfs_ctx.initialized)
     {
         packfs_ctx.orig_open = dlsym(RTLD_NEXT, "open"); //(orig_func_type_open)
-        packfs_initialized = true;
+        packfs.initialized = true;
     }
     return packfs_ctx;
 }
-
 
 int open(const char *path, int flags, ...)
 {
