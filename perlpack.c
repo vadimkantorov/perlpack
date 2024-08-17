@@ -525,10 +525,6 @@ void xs_init         (pTHX)
     // https://github.com/xsawyerx/xs-fun
     // https://perldoc.perl.org/perlxs
     // https://perldoc.perl.org/perlapi
-    //newXS("Fcntl::bootstrap", boot_Fcntl, file);
-    //newXS("IO::bootstrap", boot_IO, file);
-    //newXS("Cwd::bootstrap", boot_Cwd, file);
-    //newXS("Encode::Unicode::bootstrap", boot_Encode__Unicode, file);
    
 #ifdef PERLPACK_mro
     newXS("mro::bootstrap", boot_mro, file);
@@ -688,13 +684,8 @@ static char script[1 << 20] = "print('Hello world! Need more arguments!\n');";
 extern char _binary_myscript_pl_start[];
 extern char _binary_myscript_pl_end[];
 
-int main(int argc, char **argv)
+int main(int argc, char **argv, char** env)
 {
-    PERL_SYS_INIT3(&argc, &argv, NULL);
-    PerlInterpreter* my_perl = perl_alloc();
-    perl_construct(my_perl);
-    PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
-
     if(argc > 1 && 0 == strcmp("myscript.pl", argv[1]))
     {
         int iSize = (int)(_binary_myscript_pl_end - _binary_myscript_pl_start);
@@ -705,13 +696,25 @@ int main(int argc, char **argv)
     {
         strcpy(script, argv[2]);
     }
+    
+    int res = 0;
+    PERL_SYS_INIT3(&argc, &argv, &env);
+    PerlInterpreter* my_perl = perl_alloc();
+    if(!my_perl) return -1;
 
+    perl_construct(my_perl);
+    PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
+    char** use_current_env = NULL
     char *one_args[] = { "perlpack", "-e", script, "--", argv[2], NULL };
-    perl_parse(my_perl, xs_init, 5, one_args, (char **)NULL);
-    perl_run(my_perl);
-    perl_destruct(my_perl);
+    res = perl_parse(my_perl, xs_init, 5, one_args, env);
+    // https://github.com/Perl/perl5/commit/0301e899536a22752f40481d8a1d141b7a7dda82
+    // https://github.com/Perl/perl5/issues/16565
+    if(res == 0) res = perl_run(my_perl); // error if res != 0 (or stricter in case exit(0) was called from perl code): (res & 0xFF) != 0: https://www.postgresql.org/message-id/23260.1527026547%40sss.pgh.pa.us
+
+    PL_perl_destruct_level = 0;
+    res = perl_destruct(my_perl);
     perl_free(my_perl);
     PERL_SYS_TERM();
 
-    return 0;
+    return res;
 }
