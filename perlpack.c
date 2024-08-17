@@ -1,36 +1,33 @@
 #define _GNU_SOURCE
-
+#include <string.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
-#include <string.h>
 #include <dlfcn.h>
-//#include <fcntl.h>
 #include <stdarg.h>
+#include <assert.h>
+//#include <fcntl.h>
 
 #include <sys/stat.h>
+#include <sys/mman.h>
 
 #include <EXTERN.h>
 #include <perl.h>
 #include <XSUB.h>
+
+static char 
+static char script[1 << 20] = "print('Hello world! Need more arguments!\n');";
+
+extern char _binary_myscript_pl_start[];
+extern char _binary_myscript_pl_end[];
+
 
 ///////////////////////////////////////
 #ifdef PACKFS_DYNAMIC
 
 #include "perlpack.h"
 
-#define _GNU_SOURCE
-#include <string.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <errno.h>
-#include <dlfcn.h>
-#include <assert.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
-
 #define packfs_prefix "/mnt/perlpack/"
-
 #define packfs_filefd_min 1000000000
 #define packfs_filefd_max 1000001000
 #define packfs_filefd_cnt (packfs_filefd_max - packfs_filefd_min)
@@ -678,13 +675,7 @@ void xs_init         (pTHX)
 }
 ///////////////////////////////////////
 
-
-static char script[1 << 20] = "print('Hello world! Need more arguments!\n');";
-
-extern char _binary_myscript_pl_start[];
-extern char _binary_myscript_pl_end[];
-
-int main(int argc, char **argv, char** env)
+int main(int argc, char *argv[], char* envp[])
 {
     if(argc > 1 && 0 == strcmp("myscript.pl", argv[1]))
     {
@@ -696,25 +687,29 @@ int main(int argc, char **argv, char** env)
     {
         strcpy(script, argv[2]);
     }
+
+    for(
     
     // https://perldoc.perl.org/perlembed
+    // https://perldoc.perl.org/perlguts
+    // https://www.perlmonks.org/?node_id=385469
     int res = 0;
-    PERL_SYS_INIT3(&argc, &argv, &env);
-    PerlInterpreter* my_perl = perl_alloc();
-    if(!my_perl) return -1;
+    PERL_SYS_INIT3(&argc, &argv, &envp);
+    PerlInterpreter* myperl = perl_alloc();
+    if(!myperl) return -1;
 
-    perl_construct(my_perl);
+    perl_construct(myperl);
     PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
-    char** use_current_env = NULL;
-    char *one_args[] = { "perlpack", "-e", script, "--", argv[2], NULL };
-    res = perl_parse(my_perl, xs_init, 5, one_args, env);
+    char *myperl_argv[] = { "perlpack", "-V", "-e", script, "--", argv[2], NULL };
+    int myperl_argc = 6;
+    res = perl_parse(myperl, xs_init, myperl_argc, myperl_argv, envp);
     // https://github.com/Perl/perl5/commit/0301e899536a22752f40481d8a1d141b7a7dda82
     // https://github.com/Perl/perl5/issues/16565
-    if(res == 0) res = perl_run(my_perl); // error if res != 0 (or stricter in case exit(0) was called from perl code): (res & 0xFF) != 0: https://www.postgresql.org/message-id/23260.1527026547%40sss.pgh.pa.us
+    if(res == 0) res = perl_run(myperl); // error if res != 0 (or stricter in case exit(0) was called from perl code): (res & 0xFF) != 0: https://www.postgresql.org/message-id/23260.1527026547%40sss.pgh.pa.us
 
     PL_perl_destruct_level = 0;
-    res = perl_destruct(my_perl);
-    perl_free(my_perl);
+    res = perl_destruct(myperl);
+    perl_free(myperl);
     PERL_SYS_TERM();
 
     return res;

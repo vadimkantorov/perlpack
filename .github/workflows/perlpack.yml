@@ -4,8 +4,9 @@ on: workflow_dispatch
 
 env:
   URLPERL: https://www.cpan.org/src/5.0/perl-5.35.4.tar.gz
-  MAKEFLAGS: -j2
+  VERPERL: 5.35.4
   ###
+  MAKEFLAGS: -j2
   #STATICLDFLAGS: --static -static -static-libstdc++ -static-libgcc
   ###
   MODULES_a: mro/mro.a Devel/Peek/Peek.a File/DosGlob/DosGlob.a File/Glob/Glob.a Sys/Syslog/Syslog.a Sys/Hostname/Hostname.a PerlIO/via/via.a PerlIO/mmap/mmap.a PerlIO/encoding/encoding.a PerlIO/scalar/scalar.a B/B.a attributes/attributes.a Unicode/Normalize/Normalize.a Unicode/Collate/Collate.a threads/threads.a threads/shared/shared.a IPC/SysV/SysV.a re/re.a Digest/MD5/MD5.a Digest/SHA/SHA.a SDBM_File/SDBM_File.a Math/BigInt/FastCalc/FastCalc.a Data/Dumper/Dumper.a I18N/Langinfo/Langinfo.a Time/HiRes/HiRes.a Time/Piece/Piece.a IO/IO.a Socket/Socket.a Hash/Util/FieldHash/FieldHash.a Hash/Util/Util.a Filter/Util/Call/Call.a POSIX/POSIX.a Encode/Unicode/Unicode.a Encode/Encode.a Encode/JP/JP.a Encode/KR/KR.a Encode/EBCDIC/EBCDIC.a Encode/CN/CN.a Encode/Symbol/Symbol.a Encode/Byte/Byte.a Encode/TW/TW.a Compress/Raw/Zlib/Zlib.a Compress/Raw/Bzip2/Bzip2.a MIME/Base64/Base64.a Cwd/Cwd.a Storable/Storable.a List/Util/Util.a Fcntl/Fcntl.a Opcode/Opcode.a
@@ -30,7 +31,7 @@ jobs:
           tar -xf $(basename $URLPERL) --strip-components=1 --directory=build
           
           cd build
-          sh ./Configure -sde -Dman1dir=none -Dman3dir=none -Dprefix=../packfs -Aldflags=-lm -Accflags=-lm -Dusedevel -Dlibs="-lpthread -ldl -lm -lutil -lc" -Dstatic_ext="$MODULES_ext"
+          sh ./Configure -sde -Dman1dir=none -Dman3dir=none -Dprefix=../packfs -Dsiteprefix=/mnt/perlpack -Aldflags=-lm -Accflags=-lm -Dusedevel -Dlibs="-lpthread -ldl -lm -lutil -lc" -Dstatic_ext="$MODULES_ext"
           make miniperl generate_uudmap
           make perl
           make install
@@ -47,8 +48,8 @@ jobs:
           ./perlpack
           ##ldd ./perlpack || true
           rm -rf packfs
-          export PERLLIB=/mnt/perlpack/lib/perl5/5.35.4:/mnt/perlpack/lib/perl5/5.35.4/x86_64-linux 
-          strace -f -e trace=file,read,write,close ./perlpack -e 'use Cwd;print(Cwd::cwd()."\n");'
+          #export PERLLIB=/mnt/perlpack/lib/perl5/5.35.4:/mnt/perlpack/lib/perl5/5.35.4/x86_64-linux 
+          strace -f -e trace=file,read,write,close ./perlpack -e 'use Cwd;print(Cwd::cwd(),"\n");'
        
       - name: Artifacts
         uses: actions/upload-artifact@v4
