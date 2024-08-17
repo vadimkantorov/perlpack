@@ -34,8 +34,8 @@ print('\n'.join(f'extern char _binary_{pp}_start[], _binary_{pp}_end[];' for p i
 print('struct packfsinfo { const char* safe_path; const char *path; const char* start; const char* end; } packfsinfos[] = {', file=f)
 for p in files:
     pp = p.translate(translate)
-    print('{ "' + repr(pp)[1:-1] + '", "' + repr(os.path.join(args.prefix, p))[1:-1] + '", ', f'_binary_{pp}_start, ', f'_binary_{pp}_end ', '},', file=f)
+    print('{ "' + repr(pp)[1:-1] + '", "' + repr(os.path.join(args.prefix, p.split(os.path.sep,maxsplit=1)[-1] ))[1:-1] + '", ', f'_binary_{pp}_start, ', f'_binary_{pp}_end ', '},', file=f)
 print('};', file=f)
-print('const char* packfsdirs[] = {\n', ',\n'.join('"' + repr(os.path.join(args.prefix, p))[1:-1] + '"' for p in dirs), '\n};\n', file=f)
+print('const char* packfsdirs[] = {\n', ',\n'.join('"' + repr(os.path.join(args.prefix, p.split(os.path.sep,maxsplit=1)[-1] ))[1:-1] + '"' for p in dirs), '\n};\n', file=f)
 #print('\nconst char* packfsfiles[] = {\n' + ',\n'.join('"' + repr(p)[1:-1] + '"' for p in files) + '\n};\n\n', file=f)
 
