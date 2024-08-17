@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
-#include <dlfcn.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <assert.h>
@@ -26,8 +25,6 @@ static char script[1 << 20] = "print('Hello world! Need more arguments!\n');";
 
 extern char _binary_myscript_pl_start[];
 extern char _binary_myscript_pl_end[];
-
-#ifdef PACKFS_DYNAMIC
 
 #include "perlpack.h"
 
@@ -54,6 +51,8 @@ typedef struct
 
 } packfs_context;
 
+#ifdef PACKFS_DYNAMIC
+#include <dlfcn.h>
 packfs_context packfs_ensure_context()
 {
     static packfs_context packfs_ctx = {0};
@@ -71,6 +70,35 @@ packfs_context packfs_ensure_context()
     }
     return packfs_ctx;
 }
+#endif
+#ifdef PACKFS_STATIC
+extern int orig_open(const char *path, int flags);
+extern int orig_close(int fd);
+extern ssize_t orig_read(int fd, void* buf, size_t count);
+extern int orig_access(const char *path, int flags);
+extern off_t orig_lseek(int fd, off_t offset, int whence);
+extern int orig_stat(const char *restrict path, struct stat *restrict statbuf);
+extern FILE* orig_fopen(const char *path, const char *mode);
+extern int orig_fileno(FILE* stream);
+packfs_context packfs_ensure_context()
+{
+    static packfs_context packfs_ctx = {0};
+    if(!packfs_ctx.initialized)
+    {
+        packfs_ctx.orig_open = orig_open;
+        packfs_ctx.orig_close = orig_close;
+        packfs_ctx.orig_read = orig_read;
+        packfs_ctx.orig_access = orig_access;
+        packfs_ctx.orig_lseek = orig_lseek;
+        packfs_ctx.orig_stat = orig_stat;
+        packfs_ctx.orig_fopen = orig_fopen;
+        packfs_ctx.orig_fileno = orig_fileno;
+        packfs_ctx.initialized = true;
+    }
+    return packfs_ctx;
+}
+#endif
+
 
 const char* packfs_sanitize_path(const char* path)
 {
@@ -378,8 +406,6 @@ int stat(const char *restrict path, struct stat *restrict statbuf)
 #endif
     return res;
 }
-
-#endif
 
 ///////////////////////////////////////
 // #include <xsinit.c>
