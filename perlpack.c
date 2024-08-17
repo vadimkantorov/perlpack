@@ -705,7 +705,7 @@ int main(int argc, char **argv, char** env)
 
     perl_construct(my_perl);
     PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
-    char** use_current_env = NULL
+    char** use_current_env = NULL;
     char *one_args[] = { "perlpack", "-e", script, "--", argv[2], NULL };
     res = perl_parse(my_perl, xs_init, 5, one_args, env);
     // https://github.com/Perl/perl5/commit/0301e899536a22752f40481d8a1d141b7a7dda82
