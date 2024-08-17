@@ -66,7 +66,9 @@ jobs:
           ./perlpack -e 'use Cwd; print(Cwd::cwd(), "\n");'
           # https://stackoverflow.com/questions/10763394/how-to-build-a-c-program-using-a-custom-version-of-glibc-and-static-linking
           cp libc_perlpack.a libc.a
-          cc -o perlpack perlpack.c myscript.o  -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -DPACKFS_STATIC  -I$PWD/build -I/usr/local/include   -Wl,-E -fstack-protector-strong -fwrapv -fno-strict-aliasing -L/usr/local/lib build/libperl.a libc.a  -lpthread -ldl -lm -lutil -lc   $STATICLDFLAGS $MODULES_def $(printf "build/lib/auto/%s " $MODULES_a)   @perlpack.h.txt
+          cc -o perlpackstatic perlpack.c myscript.o  -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -DPACKFS_STATIC  -I$PWD/build -I/usr/local/include   -Wl,-E -fstack-protector-strong -fwrapv -fno-strict-aliasing -L/usr/local/lib build/libperl.a libc.a  -lpthread -ldl -lm -lutil -lc   $STATICLDFLAGS $MODULES_def $(printf "build/lib/auto/%s " $MODULES_a)   @perlpack.h.txt
+          ./perlpackstatic
+          ./perlpackstatic -e 'use Cwd; print(Cwd::cwd(), "\n");'
        
       - name: Artifacts
         uses: actions/upload-artifact@v4

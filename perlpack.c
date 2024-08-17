@@ -72,14 +72,14 @@ packfs_context packfs_ensure_context()
 }
 #endif
 #ifdef PACKFS_STATIC
-extern int orig_open(const char *path, int flags);
-extern int orig_close(int fd);
-extern ssize_t orig_read(int fd, void* buf, size_t count);
-extern int orig_access(const char *path, int flags);
-extern off_t orig_lseek(int fd, off_t offset, int whence);
-extern int orig_stat(const char *restrict path, struct stat *restrict statbuf);
-extern FILE* orig_fopen(const char *path, const char *mode);
-extern int orig_fileno(FILE* stream);
+int orig_open(const char *path, int flags);
+int orig_close(int fd);
+ssize_t orig_read(int fd, void* buf, size_t count);
+int orig_access(const char *path, int flags);
+off_t orig_lseek(int fd, off_t offset, int whence);
+int orig_stat(const char *restrict path, struct stat *restrict statbuf);
+FILE* orig_fopen(const char *path, const char *mode);
+int orig_fileno(FILE* stream);
 packfs_context packfs_ensure_context()
 {
     static packfs_context packfs_ctx = {0};
