@@ -47,7 +47,8 @@ jobs:
           ./perlpack
           ##ldd ./perlpack || true
           rm -rf packfs
-          export PERLLIB=/mnt/perlpack/lib/perl5/5.35.4:/mnt/perlpack/lib/perl5/5.35.4/x86_64-linux 
+          export PERLLIB=/mnt/perlpack/lib/perl5/5.35.4
+          #:/mnt/perlpack/lib/perl5/5.35.4/x86_64-linux 
           strace -f -e trace=file,read,write,close ./perlpack -e 'use Cwd;print(Cwd::cwd()."\n");'
        
       - name: Artifacts
