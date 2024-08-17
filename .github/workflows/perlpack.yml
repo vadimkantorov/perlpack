@@ -62,7 +62,7 @@ jobs:
           ./perlpack
           ##ldd ./perlpack || true
           #strace -f -e trace=file,read,write,close
-          rm -rf packfs
+          #rm -rf packfs
           ./perlpack -e 'use Cwd; print(Cwd::cwd(), "\n");'
           # https://stackoverflow.com/questions/10763394/how-to-build-a-c-program-using-a-custom-version-of-glibc-and-static-linking
           cp libc_perlpack.a libc.a
