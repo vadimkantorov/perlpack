@@ -35,7 +35,7 @@
 #ifdef PACKFS_PREFIX
 #define packfs_prefix packfs_string_value(PACKFS_PREFIX)
 #else
-#define packfs_prefix "packfs/"
+#define packfs_prefix "/mnt/perlpack/"
 #endif
 
 

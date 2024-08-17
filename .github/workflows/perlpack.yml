@@ -40,7 +40,7 @@ jobs:
         run: |
           rm -rf packfs/man packfs/lib/*/pod/
           find packfs -name '*.pod' -o -name '*.ld' -o -name '*.a' -o -name '*.h' -delete
-          python packfs.py -i packfs -o perlpack.h
+          python perlpack.py -i packfs -o perlpack.h --prefix=/mnt/perlpack/
           #cc -shared -fPIC packfs.c -o packfs.so -ldl @perlpack.h.txt
           ###
           ld -r -b binary -o myscript.o myscript.pl
@@ -48,7 +48,7 @@ jobs:
           ./perlpack
           ##ldd ./perlpack || true
           rm -rf packfs
-          export PERLLIB=packfs/lib/perl5/5.35.4:packfs/lib/perl5/5.35.4/x86_64-linux 
+          export PERLLIB=/mnt/perlpack/lib/perl5/5.35.4:/mnt/perlpack/lib/perl5/5.35.4/x86_64-linux 
           strace -f -e trace=file,read,write,close ./perlpack -e 'use Cwd;print(Cwd::cwd()."\n");'
        
       - name: Artifacts
@@ -56,4 +56,4 @@ jobs:
         with:
           path: |
             perlpack
-            perlpack.h.txt
+            perlpack.h
