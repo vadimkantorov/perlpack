@@ -239,7 +239,7 @@ packfs_context packfs_ensure_context()
     if(!packfs_ctx.initialized)
     {
         packfs_ctx.orig_open = dlsym(RTLD_NEXT, "open"); //(orig_func_type_open)
-        packfs.initialized = true;
+        packfs_ctx.initialized = true;
     }
     return packfs_ctx;
 }
