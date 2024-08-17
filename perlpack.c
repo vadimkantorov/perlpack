@@ -1,3 +1,10 @@
+// https://perldoc.perl.org/perlembed
+// https://perldoc.perl.org/perlguts
+// https://www.perlmonks.org/?node_id=385469
+// https://github.com/Perl/perl5/commit/0301e899536a22752f40481d8a1d141b7a7dda82
+// https://github.com/Perl/perl5/issues/16565
+// https://www.postgresql.org/message-id/23260.1527026547%40sss.pgh.pa.us
+
 #define _GNU_SOURCE
 #include <string.h>
 #include <stdio.h>
@@ -6,7 +13,6 @@
 #include <dlfcn.h>
 #include <stdarg.h>
 #include <assert.h>
-//#include <fcntl.h>
 
 #include <sys/stat.h>
 #include <sys/mman.h>
@@ -15,14 +21,11 @@
 #include <perl.h>
 #include <XSUB.h>
 
-static char 
 static char script[1 << 20] = "print('Hello world! Need more arguments!\n');";
 
 extern char _binary_myscript_pl_start[];
 extern char _binary_myscript_pl_end[];
 
-
-///////////////////////////////////////
 #ifdef PACKFS_DYNAMIC
 
 #include "perlpack.h"
@@ -287,7 +290,6 @@ ssize_t read(int fd, void* buf, size_t count)
     return res;
 }
 
-// https://en.cppreference.com/w/c/io/fseek
 off_t lseek(int fd, off_t offset, int whence)
 {
     typedef off_t (*orig_func_type)(int fd, off_t offset, int whence);
@@ -354,7 +356,6 @@ int stat(const char *restrict path, struct stat *restrict statbuf)
 
 #endif
 
-//#include "packfs.c"
 ///////////////////////////////////////
 // #include <xsinit.c>
 
@@ -687,13 +688,6 @@ int main(int argc, char *argv[], char* envp[])
     {
         strcpy(script, argv[2]);
     }
-
-    for(
-    
-    // https://perldoc.perl.org/perlembed
-    // https://perldoc.perl.org/perlguts
-    // https://www.perlmonks.org/?node_id=385469
-    int res = 0;
     PERL_SYS_INIT3(&argc, &argv, &envp);
     PerlInterpreter* myperl = perl_alloc();
     if(!myperl) return -1;
@@ -702,10 +696,8 @@ int main(int argc, char *argv[], char* envp[])
     PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
     char *myperl_argv[] = { "perlpack", "-V", "-e", script, "--", argv[2], NULL };
     int myperl_argc = 6;
-    res = perl_parse(myperl, xs_init, myperl_argc, myperl_argv, envp);
-    // https://github.com/Perl/perl5/commit/0301e899536a22752f40481d8a1d141b7a7dda82
-    // https://github.com/Perl/perl5/issues/16565
-    if(res == 0) res = perl_run(myperl); // error if res != 0 (or stricter in case exit(0) was called from perl code): (res & 0xFF) != 0: https://www.postgresql.org/message-id/23260.1527026547%40sss.pgh.pa.us
+    int res = perl_parse(myperl, xs_init, myperl_argc, myperl_argv, envp);
+    if(res == 0) res = perl_run(myperl); // error if res != 0 (or stricter in case exit(0) was called from perl code): (res & 0xFF) != 0: 
 
     PL_perl_destruct_level = 0;
     res = perl_destruct(myperl);
