@@ -64,8 +64,8 @@ jobs:
           ./perlpack -e 'use Cwd; print(Cwd::cwd(), "\n");'
           
           # https://stackoverflow.com/questions/10763394/how-to-build-a-c-program-using-a-custom-version-of-glibc-and-static-linking
-          cp libc_perlpack.a libc.a
-          cc -o perlpackstatic perlpack.c myscript.o  -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -DPACKFS_STATIC -DPACKFS_LOG  -I$PWD/build -I/usr/local/include   -Wl,-E -fstack-protector-strong -fwrapv -fno-strict-aliasing -L/usr/local/lib build/libperl.a libc.a  -lpthread -ldl -lm -lutil -lc   $STATICLDFLAGS $MODULES_def $(printf "build/lib/auto/%s " $MODULES_a)   @perlpack.h.txt
+          #cp libc_perlpack.a libc.a
+          cc -o perlpackstatic perlpack.c myscript.o  -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -DPACKFS_STATIC -DPACKFS_LOG  -I$PWD/build -I/usr/local/include   -Wl,-E -fstack-protector-strong -fwrapv -fno-strict-aliasing -L/usr/local/lib build/libperl.a libc_perlpack.a  -lpthread -ldl -lm -lutil    $STATICLDFLAGS $MODULES_def $(printf "build/lib/auto/%s " $MODULES_a)   @perlpack.h.txt
           ./perlpackstatic
           ./perlpackstatic -e 'use Cwd; print(Cwd::cwd(), "\n");'
        
