@@ -10,7 +10,7 @@ args = parser.parse_args()
 
 translate = {ord('/') : '_', ord('.') : '_', ord('-') : '_'}
 
-assert os.path.exists(args.input_path) and os.path.isdir(args.input_path and args.output_path)
+assert os.path.exists(args.input_path) and os.path.isdir(args.input_path) and args.output_path
 
 os.makedirs(args.output_path + '.o', exist_ok = True)
 
