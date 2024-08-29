@@ -21,14 +21,18 @@ File::Path::make_path($output_path . '.o');
 if (-d "./perlpack.h.o/") {
     print("OK!\n");
 }
+if (-d "./packfs/") {
+    print("DIR!\n");
+}
 
 my (@objects, @files, @dirs);
 File::Find::find(sub {
-    print($File::Find::name, "\n");
 
     if (-d $File::Find::name) {
+        print($File::Find::name, "dir\n");
         push @dirs, $File::Find::name;
     } else {
+        print($File::Find::name, "file\n");
         my $safe_path = $File::Find::name;
         $safe_path =~ s/[\/.-]/_/g;
         push @files, $File::Find::name;
