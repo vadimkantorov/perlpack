@@ -4,6 +4,10 @@
 // https://github.com/Perl/perl5/commit/0301e899536a22752f40481d8a1d141b7a7dda82
 // https://github.com/Perl/perl5/issues/16565
 // https://www.postgresql.org/message-id/23260.1527026547%40sss.pgh.pa.us
+// https://medium.com/booking-com-development/native-extensions-for-perl-without-smoke-and-mirrors-40479999dfc8
+// https://github.com/xsawyerx/xs-fun
+// https://perldoc.perl.org/perlxs
+// https://perldoc.perl.org/perlapi
 
 #define _GNU_SOURCE
 #include <string.h>
@@ -33,9 +37,6 @@ extern char _binary_myscript_pl_end[];
 #define packfs_filefd_max 1000001000
 #define packfs_filefd_cnt (packfs_filefd_max - packfs_filefd_min)
 
-int packfs_filefd[packfs_filefd_cnt];
-FILE* packfs_fileptr[packfs_filefd_cnt];
-
 typedef struct
 {
     bool initialized;
@@ -51,26 +52,20 @@ typedef struct
 
 } packfs_context;
 
-#ifdef PACKFS_DYNAMIC
-#include <dlfcn.h>
-packfs_context packfs_ensure_context()
+typedef struct
 {
-    static packfs_context packfs_ctx = {0};
-    if(!packfs_ctx.initialized)
-    {
-        packfs_ctx.orig_open = dlsym(RTLD_NEXT, "open");
-        packfs_ctx.orig_close = dlsym(RTLD_NEXT, "close");
-        packfs_ctx.orig_read = dlsym(RTLD_NEXT, "read");
-        packfs_ctx.orig_access = dlsym(RTLD_NEXT, "access");
-        packfs_ctx.orig_lseek = dlsym(RTLD_NEXT, "lseek");
-        packfs_ctx.orig_stat = dlsym(RTLD_NEXT, "stat");
-        packfs_ctx.orig_fopen = dlsym(RTLD_NEXT, "fopen");
-        packfs_ctx.orig_fileno = dlsym(RTLD_NEXT, "fileno");
-        packfs_ctx.initialized = true;
-    }
-    return packfs_ctx;
+    int packfsfilesnum, packfsdirsnum;
+    struct { const char* safe_path; const char *path; const char* start; const char* end; bool isdir; } packfsinfos[];
+} packfs_index;
+
+packfs_index* packfs_read_ld_index(int packfsfilesnum, int packfsdirsnum, void* packfsinfos, char* packfsdirs[])
+{
+    return NULL;
 }
-#endif
+
+int packfs_filefd[packfs_filefd_cnt];
+FILE* packfs_fileptr[packfs_filefd_cnt];
+
 #ifdef PACKFS_STATIC
 int orig_open(const char *path, int flags);
 int orig_close(int fd);
@@ -93,6 +88,25 @@ packfs_context packfs_ensure_context()
         packfs_ctx.orig_stat = orig_stat;
         packfs_ctx.orig_fopen = orig_fopen;
         packfs_ctx.orig_fileno = orig_fileno;
+        packfs_ctx.initialized = true;
+    }
+    return packfs_ctx;
+}
+#else
+#include <dlfcn.h>
+packfs_context packfs_ensure_context()
+{
+    static packfs_context packfs_ctx = {0};
+    if(!packfs_ctx.initialized)
+    {
+        packfs_ctx.orig_open = dlsym(RTLD_NEXT, "open");
+        packfs_ctx.orig_close = dlsym(RTLD_NEXT, "close");
+        packfs_ctx.orig_read = dlsym(RTLD_NEXT, "read");
+        packfs_ctx.orig_access = dlsym(RTLD_NEXT, "access");
+        packfs_ctx.orig_lseek = dlsym(RTLD_NEXT, "lseek");
+        packfs_ctx.orig_stat = dlsym(RTLD_NEXT, "stat");
+        packfs_ctx.orig_fopen = dlsym(RTLD_NEXT, "fopen");
+        packfs_ctx.orig_fileno = dlsym(RTLD_NEXT, "fileno");
         packfs_ctx.initialized = true;
     }
     return packfs_ctx;
@@ -560,20 +574,14 @@ extern void boot_Fcntl(pTHX_ CV* cv);
 extern void boot_Opcode(pTHX_ CV* cv);
 #endif
 
-
-
-
-//EXTERN_C void xs_init         (pTHX);
-void xs_init         (pTHX)
+//EXTERN_C void xs_init(pTHX);
+void xs_init(pTHX)
 {
     static const char file[] = __FILE__;
     dXSUB_SYS;
     PERL_UNUSED_CONTEXT;
     
-    // https://medium.com/booking-com-development/native-extensions-for-perl-without-smoke-and-mirrors-40479999dfc8
-    // https://github.com/xsawyerx/xs-fun
-    // https://perldoc.perl.org/perlxs
-    // https://perldoc.perl.org/perlapi
+    newXS("DynaLoader::boot_DynaLoader", boot_DynaLoader, file);
    
 #ifdef PERLPACK_mro
     newXS("mro::bootstrap", boot_mro, file);
@@ -722,8 +730,6 @@ void xs_init         (pTHX)
 #ifdef PERLPACK_Opcode
     newXS("Opcode::bootstrap", boot_Opcode, file);
 #endif
-    
-    newXS("DynaLoader::boot_DynaLoader", boot_DynaLoader, file);
 }
 ///////////////////////////////////////
 

@@ -57,7 +57,7 @@ jobs:
           rm -rf packfs
           ###
           ld -r -b binary -o myscript.o myscript.pl
-          cc -o perlpack perlpack.c myscript.o  -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -DPACKFS_DYNAMIC      -I$PWD/build -I/usr/local/include   -Wl,-E -fstack-protector-strong -fwrapv -fno-strict-aliasing -L/usr/local/lib build/libperl.a   -lpthread -ldl -lm -lutil -lc   $MODULES_def $(printf "build/lib/auto/%s " $MODULES_a)   @perlpack.h.txt
+          cc -o perlpack perlpack.c myscript.o  -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -I$PWD/build -I/usr/local/include   -Wl,-E -fstack-protector-strong -fwrapv -fno-strict-aliasing -L/usr/local/lib build/libperl.a   -lpthread -ldl -lm -lutil -lc   $MODULES_def $(printf "build/lib/auto/%s " $MODULES_a)   @perlpack.h.txt
           ./perlpack
           ./perlpack       -e 'use Cwd; print(Cwd::cwd(), "\n");'
           
