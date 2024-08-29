@@ -31,7 +31,7 @@ File::Find::find(sub {
         $safe_path =~ s/[\/.-]/_/g;
         push @files, $p;
         push @objects, File::Spec->catfile($output_path . '.o', $safe_path . '.o');
-        system('ld', '-r', '-b', 'binary', '-o', $objects[-1]), $files[-1]) == 0 or die "ld command failed: $?";
+        system('ld', '-r', '-b', 'binary', '-o', $objects[-1], $files[-1]) == 0 or die "ld command failed: $?";
     }
     chdir $newcwd;
 }, $input_path);
