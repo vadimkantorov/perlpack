@@ -18,17 +18,20 @@ die "Input path does not exist or is not a directory" unless -e $input_path && -
 die "Output path not specified" if $output_path eq '';
 
 File::Path::make_path($output_path . '.o');
+if (-d "./perlpack.h.o/") {
+    print("OK!\n");
+}
 
 my (@objects, @files, @dirs);
-
 File::Find::find(sub {
+    print($File::Find::name, "\n");
+
     if (-d $File::Find::name) {
         push @dirs, $File::Find::name;
-    }
-    else {
-        push @files, $File::Find::name;
+    } else {
         my $safe_path = $File::Find::name;
         $safe_path =~ s/[\/.-]/_/g;
+        push @files, $File::Find::name;
         push @objects, File::Spec->catfile($output_path . '.o', $safe_path . '.o');
         system('ld', '-r', '-b', 'binary', '-o', $objects[-1], $files[-1]) == 0 or die "ld command failed: $?";
     }
