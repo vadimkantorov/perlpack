@@ -36,8 +36,8 @@ File::Find->find(sub {
 
 }, $input_path);
 
-open my $f, '>', $output_path . '.txt' or die "Could not open file: $!";
-print $f join("\n", @objects);
+open my $g, '>', $output_path . '.txt' or die "Could not open file: $!";
+print $g join("\n", @objects);
 
 open my $f, '>', $output_path or die "Could not open file: $!";
 print $f "int packfsfilesnum = ", scalar(@files), ", packfsdirsnum  = ", scalar(@dirs), ";\n";
