@@ -17,21 +17,20 @@ Getopt::Long::GetOptions(
 die "Input path does not exist or is not a directory" unless -e $input_path && -d $input_path ;
 die "Output path not specified" if $output_path eq '';
 
-$output_path = File::Spec->rel2abs($output_path);
 File::Path::make_path($output_path . '.o');
 
 my $cwd = Cwd::getcwd();
 my (@objects, @files, @dirs);
 File::Find::find(sub {
-    my $p = File::Spec->catfile($cwd, $File::Find::name);
-    if (-d $p) {
+    my $p = $File::Find::name;
+    if (-d File::Spec->catfile($cwd, $p)) {
         push @dirs, $p;
     } else {
         my $safe_path = $p;
         $safe_path =~ s/[\/.-]/_/g;
         push @files, $p;
         push @objects, File::Spec->catfile($output_path . '.o', $safe_path . '.o');
-        system('ld', '-r', '-b', 'binary', '-o', $objects[-1], $files[-1]) == 0 or die "ld command failed: $?";
+        system('ld', '-r', '-b', 'binary', '-o', File::Spec->catfile($cwd, $objects[-1]), File::Spec->catfile($cwd, $files[-1])) == 0 or die "ld command failed: $?";
     }
 }, $input_path);
 
