@@ -8,19 +8,23 @@ use File::Spec;
 my $input_path = '';
 my $output_path = '';
 my $prefix = '';
-Getopt::Long->GetOptions(
-    'input-path=s'  => \$input_path,
-    'output-path=s' => \$output_path,
+
+print("Hello1\n");
+Getopt::Long::GetOptions(
+    'input-path|i=s'  => \$input_path,
+    'output-path|o=s' => \$output_path,
     'prefix=s'        => \$prefix,
 );
+print("Hello2\n");
+
 die "Input path does not exist or is not a directory" unless -e $input_path && -d $input_path ;
 die "Output path not specified" if $output_path eq '';
 
-File::Path->make_path($output_path . '.o');
+File::Path::make_path($output_path . '.o');
 
 my (@objects, @files, @dirs);
 
-File::Find->find(sub {
+File::Find::find(sub {
     if (-d $File::Find::name) {
         push @dirs, $File::Find::name;
     }
@@ -28,7 +32,7 @@ File::Find->find(sub {
         push @files, $File::Find::name;
         my $safe_path = $File::Find::name;
         $safe_path =~ s/[\/.-]/_/g;
-        push @objects, File::Spec->catfile($output_path . '.o', $safe_path . '.o');
+        push @objects, File::Spec::catfile($output_path . '.o', $safe_path . '.o');
         system('ld', '-r', '-b', 'binary', '-o', $objects[-1], $files[-1]) == 0 or die "ld command failed: $?";
     }
 
