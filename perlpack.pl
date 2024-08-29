@@ -32,7 +32,7 @@ File::Find::find(sub {
         push @files, $File::Find::name;
         my $safe_path = $File::Find::name;
         $safe_path =~ s/[\/.-]/_/g;
-        push @objects, File::Spec::catfile($output_path . '.o', $safe_path . '.o');
+        push @objects, File::Spec->catfile($output_path . '.o', $safe_path . '.o');
         system('ld', '-r', '-b', 'binary', '-o', $objects[-1], $files[-1]) == 0 or die "ld command failed: $?";
     }
 
