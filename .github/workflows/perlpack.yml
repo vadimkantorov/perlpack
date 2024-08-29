@@ -54,7 +54,7 @@ jobs:
           rm -rf packfs/man packfs/lib/*/pod/
           find packfs -name '*.pod' -o -name '*.ld' -o -name '*.a' -o -name '*.h' -delete
           #python perlpack.py -i packfs -o perlpack.h --prefix=/mnt/perlpack/
-          perl perlpack.pl -i packfs -o perlpack.h --prefix=/mnt/perlpack/
+          perl perlpack.pl --input-path packfs --output-path perlpack.h --prefix /mnt/perlpack/
           rm -rf packfs
           ###
           ld -r -b binary -o myscript.o myscript.pl

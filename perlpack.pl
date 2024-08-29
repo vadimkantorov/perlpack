@@ -9,12 +9,10 @@ my $input_path = '';
 my $output_path = '';
 my $prefix = '';
 Getopt::Long->GetOptions(
-    'input-path|i=s'  => \$input_path,
-    'output-path|o=s' => \$output_path,
+    'input-path=s'  => \$input_path,
+    'output-path=s' => \$output_path,
     'prefix=s'        => \$prefix,
 );
-my %translate = ('/' => '_', '.' => '_', '-' => '_');
-
 die "Input path does not exist or is not a directory" unless -e $input_path && -d $input_path ;
 die "Output path not specified" if $output_path eq '';
 
