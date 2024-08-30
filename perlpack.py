@@ -37,8 +37,8 @@ print('struct { const char* safe_path; const char *path; const char* start; cons
 for p in files:
     ppp = p.split(os.path.sep, maxsplit=1)[-1]
     safe_path = p.translate(translate)
-    print('{ "' + repr(safe_path)[1:-1] + '", "' + repr(os.path.join(args.prefix, ppp ))[1:-1] + f'", _binary_{safe_path}_start, _binary_{safe_path}_end, 0 },', file=f)
+    print('{ "' + repr(safe_path)[1:-1] + '", "' + repr(os.path.join(args.prefix, ppp ))[1:-1] + f'", _binary_{safe_path}_start, _binary_{safe_path}_end', ', 0 },', file=f)
 for p in dirs:
     ppp = p.split(os.path.sep, maxsplit=1)[-1]
-    print('{ NULL, "' + repr(os.path.join(args.prefix, ppp))[1:-1] + '", NULL, NULL, 1 },', file=f)
+    print('{ NULL, "' + repr(os.path.join(args.prefix, ppp))[1:-1] + '", NULL, NULL', ', 1 },', file=f)
 print('};', file=f)
