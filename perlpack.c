@@ -58,18 +58,18 @@ struct packfs_context
 
 
 #ifdef PACKFS_STATIC
-int orig_open(const char *path, int flags);
-int orig_close(int fd);
-ssize_t orig_read(int fd, void* buf, size_t count);
-int orig_access(const char *path, int flags);
-off_t orig_lseek(int fd, off_t offset, int whence);
-int orig_stat(const char *restrict path, struct stat *restrict statbuf);
-FILE* orig_fopen(const char *path, const char *mode);
-int orig_fileno(FILE* stream);
+extern int orig_open(const char *path, int flags);
+extern int orig_close(int fd);
+extern ssize_t orig_read(int fd, void* buf, size_t count);
+extern int orig_access(const char *path, int flags);
+extern off_t orig_lseek(int fd, off_t offset, int whence);
+extern int orig_stat(const char *restrict path, struct stat *restrict statbuf);
+extern FILE* orig_fopen(const char *path, const char *mode);
+extern int orig_fileno(FILE* stream);
 struct packfs_context* packfs_ensure_context()
 {
     static packfs_context packfs_ctx = {0};
-    if(!packfs_ctx.initialized)
+    if(packfs_ctx.initialized != 1)
     {
         packfs_ctx.orig_open   = orig_open;
         packfs_ctx.orig_close  = orig_close;
@@ -92,7 +92,7 @@ struct packfs_context* packfs_ensure_context()
 struct packfs_context* packfs_ensure_context()
 {
     static packfs_context packfs_ctx = {0};
-    if(!packfs_ctx->initialized)
+    if(packfs_ctx.initialized != 1)
     {
         packfs_ctx.orig_open   = dlsym(RTLD_NEXT, "open");
         packfs_ctx.orig_close  = dlsym(RTLD_NEXT, "close");
@@ -106,7 +106,7 @@ struct packfs_context* packfs_ensure_context()
         packfs_ctx.packfsinfosnum = packfsinfosnum;
         packfs_ctx.packfsinfos = packfsinfos;
         packfs_ctx.packfs_prefix = "/mnt/perlpack/";
-        packfs_ctx.initialized = true;
+        packfs_ctx.initialized = 1;
     }
     return &packfs_ctx;
 }
