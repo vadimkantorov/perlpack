@@ -68,7 +68,7 @@ extern FILE* orig_fopen(const char *path, const char *mode);
 extern int orig_fileno(FILE* stream);
 struct packfs_context* packfs_ensure_context()
 {
-    static packfs_context packfs_ctx = {0};
+    static struct packfs_context packfs_ctx = {0};
     if(packfs_ctx.initialized != 1)
     {
         packfs_ctx.orig_open   = orig_open;
@@ -91,7 +91,7 @@ struct packfs_context* packfs_ensure_context()
 #include <dlfcn.h>
 struct packfs_context* packfs_ensure_context()
 {
-    static packfs_context packfs_ctx = {0};
+    static struct packfs_context packfs_ctx = {0};
     if(packfs_ctx.initialized != 1)
     {
         packfs_ctx.orig_open   = dlsym(RTLD_NEXT, "open");
