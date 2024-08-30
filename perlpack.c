@@ -15,7 +15,6 @@
 #include <unistd.h>
 #include <errno.h>
 #include <stdarg.h>
-#include <stdbool.h>
 #include <assert.h>
 
 #include <sys/stat.h>
@@ -32,15 +31,15 @@ extern char _binary_myscript_pl_end[];
 
 #include "perlpack.h"
 
-#define packfs_prefix "/mnt/perlpack/"
 #define packfs_filefd_min 1000000000
 #define packfs_filefd_max 1000001000
 #define packfs_filefd_cnt (packfs_filefd_max - packfs_filefd_min)
 
-typedef struct
+struct
 {
-    bool initialized;
-    
+    int initialized;
+    const char packfs_prefix[] = "/mnt/perlpack/";
+
     int (*orig_open)(const char *path, int flags);
     int (*orig_close)(int fd);
     ssize_t (*orig_read)(int fd, void* buf, size_t count);
@@ -49,22 +48,15 @@ typedef struct
     int (*orig_stat)(const char *restrict path, struct stat *restrict statbuf);
     FILE* (*orig_fopen)(const char *path, const char *mode);
     int (*orig_fileno)(FILE* stream);
+    
+    int packfsinfosnum;
+    struct { const char* safe_path; const char *path; const char* start; const char* end; int isdir; }* packfsinfos;
+    
+    int packfs_filefd[packfs_filefd_cnt];
+    FILE* packfs_fileptr[packfs_filefd_cnt];
 
 } packfs_context;
 
-typedef struct
-{
-    int packfsfilesnum, packfsdirsnum;
-    struct { const char* safe_path; const char *path; const char* start; const char* end; bool isdir; } packfsinfos[];
-} packfs_index;
-
-packfs_index* packfs_read_ld_index(int packfsfilesnum, int packfsdirsnum, void* packfsinfos, char* packfsdirs[])
-{
-    return NULL;
-}
-
-int packfs_filefd[packfs_filefd_cnt];
-FILE* packfs_fileptr[packfs_filefd_cnt];
 
 #ifdef PACKFS_STATIC
 int orig_open(const char *path, int flags);
@@ -75,41 +67,44 @@ off_t orig_lseek(int fd, off_t offset, int whence);
 int orig_stat(const char *restrict path, struct stat *restrict statbuf);
 FILE* orig_fopen(const char *path, const char *mode);
 int orig_fileno(FILE* stream);
-packfs_context packfs_ensure_context()
+struct packfs_context* packfs_ensure_context()
 {
     static packfs_context packfs_ctx = {0};
     if(!packfs_ctx.initialized)
     {
-        packfs_ctx.orig_open = orig_open;
-        packfs_ctx.orig_close = orig_close;
-        packfs_ctx.orig_read = orig_read;
+        packfs_ctx.packfsinfosnum = packfsinfosnum;
+        packfs_ctx.packfsinfos = packfsinfos;
+
+        packfs_ctx.orig_open   = orig_open;
+        packfs_ctx.orig_close  = orig_close;
+        packfs_ctx.orig_read   = orig_read;
         packfs_ctx.orig_access = orig_access;
-        packfs_ctx.orig_lseek = orig_lseek;
-        packfs_ctx.orig_stat = orig_stat;
-        packfs_ctx.orig_fopen = orig_fopen;
+        packfs_ctx.orig_lseek  = orig_lseek;
+        packfs_ctx.orig_stat   = orig_stat;
+        packfs_ctx.orig_fopen  = orig_fopen;
         packfs_ctx.orig_fileno = orig_fileno;
-        packfs_ctx.initialized = true;
+        packfs_ctx.initialized = 1;
     }
-    return packfs_ctx;
+    return &packfs_ctx;
 }
 #else
 #include <dlfcn.h>
-packfs_context packfs_ensure_context()
+struct packfs_context* packfs_ensure_context()
 {
     static packfs_context packfs_ctx = {0};
-    if(!packfs_ctx.initialized)
+    if(!packfs_ctx->initialized)
     {
-        packfs_ctx.orig_open = dlsym(RTLD_NEXT, "open");
-        packfs_ctx.orig_close = dlsym(RTLD_NEXT, "close");
-        packfs_ctx.orig_read = dlsym(RTLD_NEXT, "read");
+        packfs_ctx.orig_open   = dlsym(RTLD_NEXT, "open");
+        packfs_ctx.orig_close  = dlsym(RTLD_NEXT, "close");
+        packfs_ctx.orig_read   = dlsym(RTLD_NEXT, "read");
         packfs_ctx.orig_access = dlsym(RTLD_NEXT, "access");
-        packfs_ctx.orig_lseek = dlsym(RTLD_NEXT, "lseek");
-        packfs_ctx.orig_stat = dlsym(RTLD_NEXT, "stat");
-        packfs_ctx.orig_fopen = dlsym(RTLD_NEXT, "fopen");
+        packfs_ctx.orig_lseek  = dlsym(RTLD_NEXT, "lseek");
+        packfs_ctx.orig_stat   = dlsym(RTLD_NEXT, "stat");
+        packfs_ctx.orig_fopen  = dlsym(RTLD_NEXT, "fopen");
         packfs_ctx.orig_fileno = dlsym(RTLD_NEXT, "fileno");
         packfs_ctx.initialized = true;
     }
-    return packfs_ctx;
+    return &packfs_ctx;
 }
 #endif
 
@@ -119,28 +114,28 @@ const char* packfs_sanitize_path(const char* path)
     return (path != NULL && strlen(path) > 2 && path[0] == '.' && path[1] == '/') ? (path + 2) : path;
 }
 
-int packfs_open(const char* path, FILE** out)
+int packfs_open(struct packfs_context* packfs_ctx, const char* path, FILE** out)
 {
     path = packfs_sanitize_path(path);
     
-    if(strncmp(packfs_prefix, path, strlen(packfs_prefix)) != 0)
+    if(strncmp(packfs_ctx->packfs_prefix, path, strlen(packfs_ctx->packfs_prefix)) != 0)
         return -1;
 
-    for(int i = 0; i < packfsfilesnum; i++)
+    for(int i = 0; i < packfs_ctx->packfsinfosnum; i++)
     {
-        if(0 == strcmp(path, packfsinfos[i].path))
+        if(0 == strcmp(path, packfs_ctx->packfsinfos[i].path))
         {
-            FILE* res = fmemopen((void*)packfsinfos[i].start, (size_t)(packfsinfos[i].end - packfsinfos[i].start), "r");
+            FILE* res = fmemopen((void*)packfs_ctx->packfsinfos[i].start, (size_t)(packfs_ctx->packfsinfos[i].end - packfs_ctx->packfsinfos[i].start), "r");
             
             for(int k = 0; k < packfs_filefd_max - packfs_filefd_min; k++)
             {
-                if(packfs_filefd[k] == 0)
+                if(packfs_ctx->packfs_filefd[k] == 0)
                 {
-                    packfs_filefd[k] = packfs_filefd_min + k;
-                    packfs_fileptr[k] = res;
+                    packfs_ctx->packfs_filefd[k] = packfs_filefd_min + k;
+                    packfs_ctx->packfs_fileptr[k] = res;
                     if(out != NULL)
-                        *out = packfs_fileptr[k];
-                    return packfs_filefd[k];
+                        *out = packfs_ctx->packfs_fileptr[k];
+                    return packfs_ctx->packfs_filefd[k];
                 }
             }
         }
@@ -149,72 +144,72 @@ int packfs_open(const char* path, FILE** out)
     return -1;
 }
 
-int packfs_close(int fd)
+int packfs_close(struct packfs_context* packfs_ctx, int fd)
 {
     if(fd < packfs_filefd_min || fd >= packfs_filefd_max)
         return -2;
 
     for(int k = 0; k < packfs_filefd_max - packfs_filefd_min; k++)
     {
-        if(packfs_filefd[k] == fd)
+        if(packfs_ctx->packfs_filefd[k] == fd)
         {
-            packfs_filefd[k] = 0;
-            int res = fclose(packfs_fileptr[k]);
-            packfs_fileptr[k] = NULL;
+            packfs_ctx->packfs_filefd[k] = 0;
+            int res = fclose(packfs_ctx->packfs_fileptr[k]);
+            packfs_ctx->packfs_fileptr[k] = NULL;
             return res;
         }
     }
     return -2;
 }
 
-FILE* packfs_findptr(int fd)
+FILE* packfs_findptr(struct packfs_context* packfs_ctx, int fd)
 {
     if(fd < packfs_filefd_min || fd >= packfs_filefd_max)
         return NULL;
     
     for(int k = 0; k < packfs_filefd_max - packfs_filefd_min; k++)
     {
-        if(packfs_filefd[k] == fd)
-            return packfs_fileptr[k];
+        if(packfs_ctx->packfs_filefd[k] == fd)
+            return packfs_ctx->packfs_fileptr[k];
     }
     return NULL;
 }
 
-int packfs_findfd(FILE* ptr)
+int packfs_findfd(struct packfs_context* packfs_ctx, FILE* ptr)
 {
     for(int k = 0; k < packfs_filefd_max - packfs_filefd_min; k++)
     {
-        if(packfs_fileptr[k] == ptr)
-            return packfs_filefd[k];
+        if(packfs_ctx->packfs_fileptr[k] == ptr)
+            return packfs_ctx->packfs_filefd[k];
     }
     return -1;
 }
 
-ssize_t packfs_read(int fd, void* buf, size_t count)
+ssize_t packfs_read(struct packfs_context* packfs_ctx, int fd, void* buf, size_t count)
 {
-    FILE* ptr = packfs_findptr(fd);
+    FILE* ptr = packfs_findptr(packfs_ctx, fd);
     if(!ptr)
         return -1;
     return (ssize_t)fread(buf, 1, count, ptr);
 }
 
-int packfs_seek(int fd, long offset, int whence)
+int packfs_seek(struct packfs_context* packfs_ctx, int fd, long offset, int whence)
 {
-    FILE* ptr = packfs_findptr(fd);
+    FILE* ptr = packfs_findptr(packfs_ctx, fd);
     if(!ptr)
         return -1;
     return fseek(ptr, offset, whence);
 }
 
-int packfs_access(const char* path)
+int packfs_access(struct packfs_context* packfs_ctx, const char* path)
 {
     path = packfs_sanitize_path(path);
 
-    if(strncmp(packfs_prefix, path, strlen(packfs_prefix)) == 0)
+    if(strncmp(packfs_ctx->packfs_prefix, path, strlen(packfs_ctx->packfs_prefix)) == 0)
     {
-        for(int i = 0; i < packfsfilesnum; i++)
+        for(int i = 0; i < packfs_ctx->packfsinfosnum; i++)
         {
-            if(0 == strcmp(path, packfsinfos[i].path))
+            if(0 == strcmp(path, packfs_ctx->packfsinfos[i].path))
             {
                 return 0;
             }
@@ -224,28 +219,27 @@ int packfs_access(const char* path)
     return -2;
 }
 
-int packfs_stat(const char* path, struct stat *restrict statbuf)
+int packfs_stat(struct packfs_context* packfs_ctx, const char* path, struct stat *restrict statbuf)
 {
     path = packfs_sanitize_path(path);
     
-    if(strncmp(packfs_prefix, path, strlen(packfs_prefix)) == 0)
+    if(strncmp(packfs_ctx->packfs_prefix, path, strlen(packfs_ctx->packfs_prefix)) == 0)
     {
-        for(int i = 0; i < packfsfilesnum; i++)
+        for(int i = 0; i < packfs_ctx->packfsinfosnum; i++)
         {
-            if(0 == strcmp(path, packfsinfos[i].path))
+            if(0 == strcmp(path, packfs_ctx->packfsinfos[i].path))
             {
                 *statbuf = (struct stat){0};
-                statbuf->st_size = (off_t)(packfsinfos[i].end - packfsinfos[i].start);
-                statbuf->st_mode = S_IFREG;
-                return 0;
-            }
-        }
-        for(int i = 0; i < packfsdirsnum; i++)
-        {
-            if(0 == strcmp(path, packfsdirs[i]))
-            {
-                *statbuf = (struct stat){0};
-                statbuf->st_mode = S_IFDIR;
+                if(packfsinfos[i].isdir)
+                {
+                    statbuf->st_size = 0;
+                    statbuf->st_mode = S_IFDIR;
+                }
+                else
+                {
+                    statbuf->st_size = (off_t)(packfsinfos[i].end - packfsinfos[i].start);
+                    statbuf->st_mode = S_IFREG;
+                }
                 return 0;
             }
         }
@@ -257,10 +251,10 @@ int packfs_stat(const char* path, struct stat *restrict statbuf)
 
 FILE* fopen(const char *path, const char *mode)
 {
-    packfs_context packfs_ctx = packfs_ensure_context();
+    struct packfs_context* packfs_ctx = packfs_ensure_context();
     
     FILE* res = NULL;
-    if(packfs_open(path, &res) >= 0)
+    if(packfs_open(packfs_ctx, path, &res) >= 0)
     {
 #ifdef PACKFS_LOG
         fprintf(stderr, "packfs: Fopen(\"%s\", \"%s\") == %p\n", path, mode, (void*)res);
@@ -268,7 +262,7 @@ FILE* fopen(const char *path, const char *mode)
         return res;
     }
 
-    res = packfs_ctx.orig_fopen(path, mode);
+    res = packfs_ctx->orig_fopen(path, mode);
 #ifdef PACKFS_LOG
     fprintf(stderr, "packfs: fopen(\"%s\", \"%s\") == %p\n", path, mode, (void*)res);
 #endif
@@ -277,18 +271,18 @@ FILE* fopen(const char *path, const char *mode)
 
 int fileno(FILE *stream)
 {
-    packfs_context packfs_ctx = packfs_ensure_context();
+    struct packfs_context* packfs_ctx = packfs_ensure_context();
     
     if(!stream) return -1;
     
-    int res = packfs_ctx.orig_fileno(stream);
+    int res = packfs_ctx->orig_fileno(stream);
 #ifdef PACKFS_LOG
     fprintf(stderr, "packfs: fileno(%p) == %d\n", (void*)stream, res);
 #endif
     
     if(res < 0)
     {        
-        res = packfs_findfd(stream);
+        res = packfs_findfd(packfs_ctx, stream);
 #ifdef PACKFS_LOG
         fprintf(stderr, "packfs: Fileno(%p) == %d\n", (void*)stream, res);
 #endif
@@ -300,9 +294,9 @@ int fileno(FILE *stream)
 
 int open(const char *path, int flags, ...)
 {
-    packfs_context packfs_ctx = packfs_ensure_context();
+    struct packfs_context* packfs_ctx = packfs_ensure_context();
 
-    int res = packfs_open(path, NULL);
+    int res = packfs_open(packfs_ctx, path, NULL);
     if(res >= 0)
     { 
 #ifdef PACKFS_LOG
@@ -311,7 +305,7 @@ int open(const char *path, int flags, ...)
         return res;
     }
     
-    res = packfs_ctx.orig_open(path, flags);
+    res = packfs_ctx->orig_open(path, flags);
 #ifdef PACKFS_LOG
     fprintf(stderr, "packfs: open(\"%s\", %d) == %d\n", path, flags, res);
 #endif
@@ -320,9 +314,9 @@ int open(const char *path, int flags, ...)
 
 int close(int fd)
 {
-    packfs_context packfs_ctx = packfs_ensure_context();
+    struct packfs_context* packfs_ctx = packfs_ensure_context();
     
-    int res = packfs_close(fd);
+    int res = packfs_close(packfs_ctx, fd);
     if(res >= -1)
     {
 #ifdef PACKFS_LOG
@@ -331,7 +325,7 @@ int close(int fd)
         return res;
     }
     
-    res = packfs_ctx.orig_close(fd);
+    res = packfs_ctx->orig_close(fd);
 #ifdef PACKFS_LOG
     fprintf(stderr, "packfs: close(%d) == %d\n", fd, res);
 #endif
@@ -342,9 +336,9 @@ int close(int fd)
 // https://en.cppreference.com/w/c/io/fread
 ssize_t read(int fd, void* buf, size_t count)
 {
-    packfs_context packfs_ctx = packfs_ensure_context();
+    struct packfs_context* packfs_ctx = packfs_ensure_context();
     
-    ssize_t res = packfs_read(fd, buf, count);
+    ssize_t res = packfs_read(packfs_ctx, fd, buf, count);
     if(res >= 0)
     {
 #ifdef PACKFS_LOG
@@ -353,7 +347,7 @@ ssize_t read(int fd, void* buf, size_t count)
         return res;
     }
 
-    res = packfs_ctx.orig_read(fd, buf, count);
+    res = packfs_ctx->orig_read(fd, buf, count);
 #ifdef PACKFS_LOG
     fprintf(stderr, "packfs: read(%d, %p, %zu) == %d\n", fd, buf, count, (int)res);
 #endif
@@ -362,9 +356,9 @@ ssize_t read(int fd, void* buf, size_t count)
 
 off_t lseek(int fd, off_t offset, int whence)
 {
-    packfs_context packfs_ctx = packfs_ensure_context();
+    struct packfs_context* packfs_ctx = packfs_ensure_context();
     
-    int res = packfs_seek(fd, (long)offset, whence);
+    int res = packfs_seek(packfs_ctx, fd, (long)offset, whence);
     if(res >= 0)
     {
 #ifdef PACKFS_LOG
@@ -373,7 +367,7 @@ off_t lseek(int fd, off_t offset, int whence)
         return res;
     }
 
-    res = packfs_ctx.orig_lseek(fd, offset, whence);
+    res = packfs_ctx->orig_lseek(fd, offset, whence);
 #ifdef PACKFS_LOG
     fprintf(stderr, "packfs: seek(%d, %d, %d) == %d\n", fd, (int)offset, whence, (int)res);
 #endif
@@ -383,9 +377,9 @@ off_t lseek(int fd, off_t offset, int whence)
 
 int access(const char *path, int flags) 
 {
-    packfs_context packfs_ctx = packfs_ensure_context();
+    struct packfs_context* packfs_ctx = packfs_ensure_context();
     
-    int res = packfs_access(path);
+    int res = packfs_access(packfs_ctx, path);
     if(res >= -1)
     {
 #ifdef PACKFS_LOG
@@ -394,7 +388,7 @@ int access(const char *path, int flags)
         return res;
     }
     
-    res = packfs_ctx.orig_access(path, flags); 
+    res = packfs_ctx->orig_access(path, flags); 
 #ifdef PACKFS_LOG
     fprintf(stderr, "packfs: access(\"%s\", %d) == %d\n", path, flags, res);
 #endif
@@ -403,9 +397,9 @@ int access(const char *path, int flags)
 
 int stat(const char *restrict path, struct stat *restrict statbuf)
 {
-    packfs_context packfs_ctx = packfs_ensure_context();
+    struct packfs_context* packfs_ctx = packfs_ensure_context();
     
-    int res = packfs_stat(path, statbuf);
+    int res = packfs_stat(packfs_ctx, path, statbuf);
     if(res >= -1)
     {
 #ifdef PACKFS_LOG
@@ -414,7 +408,7 @@ int stat(const char *restrict path, struct stat *restrict statbuf)
         return res;
     }
 
-    res = packfs_ctx.orig_stat(path, statbuf);
+    res = packfs_ctx->orig_stat(path, statbuf);
 #ifdef PACKFS_LOG
     fprintf(stderr, "packfs: stat(\"%s\", %p) == %d\n", path, (void*)statbuf, res);
 #endif
