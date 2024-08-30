@@ -35,10 +35,10 @@ extern char _binary_myscript_pl_end[];
 #define packfs_filefd_max 1000001000
 #define packfs_filefd_cnt (packfs_filefd_max - packfs_filefd_min)
 
-struct
+struct packfs_context
 {
+    const char* packfs_prefix;
     int initialized;
-    const char packfs_prefix[] = "/mnt/perlpack/";
 
     int (*orig_open)(const char *path, int flags);
     int (*orig_close)(int fd);
@@ -54,8 +54,7 @@ struct
     
     int packfs_filefd[packfs_filefd_cnt];
     FILE* packfs_fileptr[packfs_filefd_cnt];
-
-} packfs_context;
+};
 
 
 #ifdef PACKFS_STATIC
@@ -72,9 +71,6 @@ struct packfs_context* packfs_ensure_context()
     static packfs_context packfs_ctx = {0};
     if(!packfs_ctx.initialized)
     {
-        packfs_ctx.packfsinfosnum = packfsinfosnum;
-        packfs_ctx.packfsinfos = packfsinfos;
-
         packfs_ctx.orig_open   = orig_open;
         packfs_ctx.orig_close  = orig_close;
         packfs_ctx.orig_read   = orig_read;
@@ -83,6 +79,10 @@ struct packfs_context* packfs_ensure_context()
         packfs_ctx.orig_stat   = orig_stat;
         packfs_ctx.orig_fopen  = orig_fopen;
         packfs_ctx.orig_fileno = orig_fileno;
+        
+        packfs_ctx.packfsinfosnum = packfsinfosnum;
+        packfs_ctx.packfsinfos = packfsinfos;
+        packfs_ctx.packfs_prefix = "/mnt/perlpack/";
         packfs_ctx.initialized = 1;
     }
     return &packfs_ctx;
@@ -102,6 +102,10 @@ struct packfs_context* packfs_ensure_context()
         packfs_ctx.orig_stat   = dlsym(RTLD_NEXT, "stat");
         packfs_ctx.orig_fopen  = dlsym(RTLD_NEXT, "fopen");
         packfs_ctx.orig_fileno = dlsym(RTLD_NEXT, "fileno");
+
+        packfs_ctx.packfsinfosnum = packfsinfosnum;
+        packfs_ctx.packfsinfos = packfsinfos;
+        packfs_ctx.packfs_prefix = "/mnt/perlpack/";
         packfs_ctx.initialized = true;
     }
     return &packfs_ctx;
