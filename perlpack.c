@@ -58,26 +58,33 @@ struct packfs_context
 
 
 #ifdef PACKFS_STATIC
-extern int orig_open(const char *path, int flags);
-extern int orig_close(int fd);
-extern ssize_t orig_read(int fd, void* buf, size_t count);
-extern int orig_access(const char *path, int flags);
-extern off_t orig_lseek(int fd, off_t offset, int whence);
-extern int orig_stat(const char *restrict path, struct stat *restrict statbuf);
-extern FILE* orig_fopen(const char *path, const char *mode);
-extern int orig_fileno(FILE* stream);
 struct packfs_context* packfs_ensure_context()
 {
     static struct packfs_context packfs_ctx = {0};
     if(packfs_ctx.initialized != 1)
     {
-        packfs_ctx.orig_open   = orig_open;
-        packfs_ctx.orig_close  = orig_close;
-        packfs_ctx.orig_read   = orig_read;
+        extern int orig_open(const char *path, int flags);
+        packfs_ctx.orig_open = orig_open;
+        
+        extern int orig_close(int fd);
+        packfs_ctx.orig_close = orig_close;
+
+        extern ssize_t orig_read(int fd, void* buf, size_t count);
+        packfs_ctx.orig_read = orig_read;
+        
+        extern int orig_access(const char *path, int flags);
         packfs_ctx.orig_access = orig_access;
-        packfs_ctx.orig_lseek  = orig_lseek;
-        packfs_ctx.orig_stat   = orig_stat;
-        packfs_ctx.orig_fopen  = orig_fopen;
+        
+        extern off_t orig_lseek(int fd, off_t offset, int whence);
+        packfs_ctx.orig_lseek = orig_lseek;
+        
+        extern int orig_stat(const char *restrict path, struct stat *restrict statbuf);
+        packfs_ctx.orig_stat = orig_stat;
+        
+        extern FILE* orig_fopen(const char *path, const char *mode);
+        packfs_ctx.orig_fopen = orig_fopen;
+        
+        extern int orig_fileno(FILE* stream);
         packfs_ctx.orig_fileno = orig_fileno;
         
         packfs_ctx.packfsinfosnum = packfsinfosnum;
