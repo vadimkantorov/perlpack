@@ -418,8 +418,6 @@ int stat(const char *restrict path, struct stat *restrict statbuf)
 ///////////////////////////////////////
 // #include <xsinit.c>
 
-extern void boot_DynaLoader (pTHX_ CV* cv);
-
 #ifdef PERLPACK_mro
 extern void boot_mro(pTHX_ CV* cv);
 #endif
@@ -575,6 +573,7 @@ void xs_init(pTHX)
     dXSUB_SYS;
     PERL_UNUSED_CONTEXT;
     
+    extern void boot_DynaLoader(pTHX_ CV* cv);
     newXS("DynaLoader::boot_DynaLoader", boot_DynaLoader, file);
    
 #ifdef PERLPACK_mro
