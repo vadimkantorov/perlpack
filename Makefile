@@ -1,5 +1,7 @@
 #URLPERL = https://www.cpan.org/src/5.0/perl-5.35.4.tar.gz
 
+OBJCOPY = objcopy
+
 libarchive/.libs/libarchive.a:
 	cd libarchive && sh build/autogen.sh && sh configure --without-zlib --without-bz2lib  --without-libb2 --without-iconv --without-lz4  --without-zstd --without-lzma --without-cng  --without-xml2 --without-expat --without-openssl && $(MAKE)
 
