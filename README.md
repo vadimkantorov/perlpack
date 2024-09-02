@@ -1,5 +1,6 @@
 Primer on static build of Perl
 
+
 # References
 - https://perldoc.perl.org/perlembed
 - https://metacpan.org/dist/App-Staticperl/view/staticperl.pod
