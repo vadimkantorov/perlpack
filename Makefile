@@ -8,7 +8,7 @@ libarchive/.libs/libarchive.a:
 
 build/libperl.a:
 	mkdir -p build
-	wget -nc -qO - ${URLPERL} | tar -xf - --strip-components=1 --directory=build
+	curl -L ${URLPERL} | tar -xf - --strip-components=1 --directory=build
 	#tar -xf $(shell basename ${URLPERL}) --strip-components=1 --directory=build
 	#wget -nc ${URLPERL}
 	#tar -xf $(shell basename ${URLPERL}) --strip-components=1 --directory=build
