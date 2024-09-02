@@ -44,6 +44,17 @@ extern char _binary_myscript_pl_end[];
 // define required for #include <archive_read_private.h>
 #define __LIBARCHIVE_BUILD
 #include <archive_read_private.h>
+void* last_file_buff; size_t last_file_block_size; size_t last_file_offset; archive_read_callback* old_file_read; archive_seek_callback* old_file_seek;
+static ssize_t new_file_read(struct archive *a, void *client_data, const void **buff)
+{
+    // struct read_file_data copied from https://github.com/libarchive/libarchive/blob/master/libarchive/archive_read_open_filename.c
+    struct read_file_data {int fd; size_t block_size; void* buffer;} *mine = client_data;
+    last_file_buff = mine->buffer;
+    last_file_block_size = mine->block_size;
+    last_file_offset = old_file_seek(a, client_data, 0, SEEK_CUR);
+    return old_file_read(a, client_data, buff);
+}
+
 #endif
 
 #include "perlpack.h"
@@ -51,8 +62,9 @@ extern char _binary_myscript_pl_end[];
 enum {packfs_filefd_min = 1000000000, packfs_filefd_max = 1000001000, packfs_index_filenames_num = 1024,  packfs_index_filenames_len = 128};
 struct packfs_context
 {
-    const char packfs_prefix_builtin[packfs_index_filenames_len], packfs_prefix_archive[packfs_index_filenames_len];
     int initializing, initialized;
+    
+    char packfs_prefix_builtin[packfs_index_filenames_len], packfs_prefix_archive[packfs_index_filenames_len];
 
     int (*orig_open)(const char *path, int flags);
     int (*orig_close)(int fd);
@@ -72,17 +84,6 @@ struct packfs_context
     char filenames[packfs_index_filenames_num * packfs_index_filenames_len];
     size_t files_num, filenames_lens[packfs_index_filenames_num], offsets[packfs_index_filenames_num], sizes[packfs_index_filenames_num];
 };
-
-void* last_file_buff; size_t last_file_block_size; size_t last_file_offset; archive_read_callback* old_file_read; archive_seek_callback* old_file_seek;
-static ssize_t new_file_read(struct archive *a, void *client_data, const void **buff)
-{
-    // struct read_file_data copied from https://github.com/libarchive/libarchive/blob/master/libarchive/archive_read_open_filename.c
-    struct read_file_data {int fd; size_t block_size; void* buffer;} *mine = client_data;
-    last_file_buff = mine->buffer;
-    last_file_block_size = mine->block_size;
-    last_file_offset = old_file_seek(a, client_data, 0, SEEK_CUR);
-    return old_file_read(a, client_data, buff);
-}
 
 #ifndef PACKFS_STATIC
 #include <dlfcn.h>
