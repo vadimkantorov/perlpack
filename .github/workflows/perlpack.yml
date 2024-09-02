@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@v4
       
       - name: Build libarchive
-        run: make libarchive/.libs/libarchive.a
+        run: git clone --depth 1 --single-branch https://github.com/libarchive/libarchive && make libarchive/.libs/libarchive.a
 
       - name: Build libc_perlpack.a
         run: |
