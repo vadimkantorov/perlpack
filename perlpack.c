@@ -112,27 +112,27 @@ struct packfs_context* packfs_ensure_context()
         packfs_ctx.packfsinfos = packfsinfos;
         strcpy(packfs_ctx.packfs_prefix_builtin, "/mnt/perlpack/");
         strcpy(packfs_ctx.packfs_prefix_archive, "/mnt/perlpackarchive/");
-        packfs_ctx->files_num = 0;
+        packfs_ctx.files_num = 0;
         packfs_ctx.initialized = 1;
         
-        const char* filename = "foo.zip";
+        const char* filename = getenv("PERLPACKISO");
 #ifdef PACKFS_LIBARCHIVE
-        if(filename == NULL)
+        if(filename == NULL || strlen(filename) == 0)
             return &packfs_ctx;
 
         if(packfs_use_mmap)
         {
             int fd = open(filename, O_RDONLY);
-            if(fd < 0) return -1;
+            assert(fd >= 0);
             struct stat file_info; assert(fstat(fd, &file_info) >= 0);
-            packfs_ctx->mmapsize = file_info.st_size;
-            packfs_ctx->fileptr = mmap(NULL, packfs_ctx->mmapsize, PROT_READ, MAP_PRIVATE, fd, 0);
+            packfs_ctx.mmapsize = file_info.st_size;
+            packfs_ctx.fileptr = mmap(NULL, packfs_ctx.mmapsize, PROT_READ, MAP_PRIVATE, fd, 0);
             close(fd);
         }
         else
         {
-            packfs_ctx->mmapsize = 0;
-            packfs_ctx->fileptr = fopen(filename, "rb");
+            packfs_ctx.mmapsize = 0;
+            packfs_ctx.fileptr = fopen(filename, "rb");
         }
 
         struct archive *a = archive_read_new();
@@ -164,12 +164,12 @@ struct packfs_context* packfs_ensure_context()
                 size_t entry_byte_size = (size_t)archive_entry_size(entry);
                 size_t entry_byte_offset = last_file_offset + (size_t)(firstblock_buff - last_file_buff);
                 const char* entryname = archive_entry_pathname(entry);
-                strcpy(packfs_ctx->filenames + filenames_lens_total, entryname);
-                packfs_ctx->filenames_lens[packfs_ctx->files_num] = strlen(entryname);
-                packfs_ctx->offsets[packfs_ctx->files_num] = entry_byte_offset;
-                packfs_ctx->sizes[packfs_ctx->files_num] = entry_byte_size;
-                filenames_lens_total += packfs_ctx->filenames_lens[packfs_ctx->files_num] + 1;
-                packfs_ctx->files_num++;
+                strcpy(packfs_ctx.filenames + filenames_lens_total, entryname);
+                packfs_ctx.filenames_lens[packfs_ctx.files_num] = strlen(entryname);
+                packfs_ctx.offsets[packfs_ctx.files_num] = entry_byte_offset;
+                packfs_ctx.sizes[packfs_ctx.files_num] = entry_byte_size;
+                filenames_lens_total += packfs_ctx.filenames_lens[packfs_ctx.files_num] + 1;
+                packfs_ctx.files_num++;
             }
                 
             r = archive_read_data_skip(a);
