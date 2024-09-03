@@ -30,9 +30,9 @@ jobs:
       
       - name: Test Native Perl
         run: |
-          make perlpackstatic
-          ./perlpackstatic
-          ./perlpackstatic -e 'use Cwd; print(Cwd::cwd(), "\n");'
+          make perlpackstatic && zip foo.zip perlpack.c
+          PERLPACKISO=foo.zip ./perlpackstatic
+          PERLPACKISO=foo.zip ./perlpackstatic -e 'use Cwd; print(Cwd::cwd(), "\n");'
        
       - name: Artifacts
         uses: actions/upload-artifact@v4
