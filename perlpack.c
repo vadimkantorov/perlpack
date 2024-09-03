@@ -16,9 +16,12 @@
 #include <errno.h>
 #include <stdarg.h>
 #include <assert.h>
+#include <fcntl.h>
+#include <stdlib.h>
 
 #include <sys/stat.h>
 #include <sys/mman.h>
+#include <sys/types.h>
 
 #include <EXTERN.h>
 #include <perl.h>
@@ -28,15 +31,6 @@ static char script[1 << 20] = "print('Hello world! Need more arguments!\n');";
 extern char _binary_myscript_pl_start[];
 extern char _binary_myscript_pl_end[];
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <assert.h>
 
 #ifdef PACKFS_LIBARCHIVE
 #include <archive.h>
@@ -59,10 +53,10 @@ static ssize_t new_file_read(struct archive *a, void *client_data, const void **
 
 #include "perlpack.h"
 
-enum {packfs_filefd_min = 1000000000, packfs_filefd_max = 1000001000, packfs_index_filenames_num = 1024,  packfs_index_filenames_len = 128};
+enum {packfs_filefd_min = 1000000000, packfs_filefd_max = 1000001000, packfs_index_filenames_num = 1024,  packfs_index_filenames_len = 128, packfs_use_mmap = 0};
 struct packfs_context
 {
-    int initializing, initialized;
+    int initialized;
     
     char packfs_prefix_builtin[packfs_index_filenames_len], packfs_prefix_archive[packfs_index_filenames_len];
 
@@ -93,10 +87,7 @@ struct packfs_context* packfs_ensure_context()
 {
     static struct packfs_context packfs_ctx = {0};
 
-    if(packfs_ctx.initializing == 1)
-        return NULL;
-    
-    if(packfs_ctx.initialized != 1 && packfs_ctx.initializing != 1)
+    if(packfs_ctx.initialized != 1)
     {
 #ifdef PACKFS_STATIC
         extern int orig_open(const char *path, int flags); packfs_ctx.orig_open = orig_open;
@@ -121,70 +112,74 @@ struct packfs_context* packfs_ensure_context()
         packfs_ctx.packfsinfos = packfsinfos;
         strcpy(packfs_ctx.packfs_prefix_builtin, "/mnt/perlpack/");
         strcpy(packfs_ctx.packfs_prefix_archive, "/mnt/perlpackarchive/");
+        packfs_ctx->files_num = 0;
         packfs_ctx.initialized = 1;
-    }
-    
+        
+        const char* filename = "foo.zip";
 #ifdef PACKFS_LIBARCHIVE
-    packfs_ctx->files_num = 0;
-    if(use_mmap)
-    {
-        int fd = open(filename, O_RDONLY);
-        if(fd < 0) return -1;
-        struct stat file_info; assert(fstat(fd, &file_info) >= 0);
-        packfs_ctx->mmapsize = file_info.st_size;
-        packfs_ctx->fileptr = mmap(NULL, packfs_ctx->mmapsize, PROT_READ, MAP_PRIVATE, fd, 0);
-        close(fd);
-    }
-    else
-    {
-        packfs_ctx->mmapsize = 0;
-        packfs_ctx->fileptr = fopen(filename, "rb");
-    }
+        if(filename == NULL)
+            return &packfs_ctx;
 
-    struct archive *a = archive_read_new();
-    archive_read_support_format_zip(a);
-    assert(ARCHIVE_OK == archive_read_open_filename(a, filename, 10240));
-    
-    // struct archive_read in https://github.com/libarchive/libarchive/blob/master/libarchive/archive_read_private.h
-    struct archive_read *_a = ((struct archive_read *)a);
-    old_file_read = _a->client.reader;
-    old_file_seek = _a->client.seeker;
-    a->state = ARCHIVE_STATE_NEW;
-    archive_read_set_read_callback(a, new_file_read);
-    assert(ARCHIVE_OK ==  archive_read_open1(a));
-    
-    size_t filenames_lens_total = 0;
-    for(;;)
-    {
-        struct archive_entry *entry;
-        int r = archive_read_next_header(a, &entry);
-        if (r == ARCHIVE_EOF) break;
-        if (r != ARCHIVE_OK) { fprintf(stderr, "%s\n", archive_error_string(a)); return -1; }
-        const void* firstblock_buff;
-        size_t firstblock_len;
-        int64_t firstblock_offset;
-        r = archive_read_data_block(a, &firstblock_buff, &firstblock_len, &firstblock_offset);
-        int filetype = archive_entry_filetype(entry);
-        if(filetype == AE_IFREG && archive_entry_size_is_set(entry) != 0 && last_file_buff != NULL && last_file_buff <= firstblock_buff && firstblock_buff < last_file_buff + last_file_block_size)
+        if(packfs_use_mmap)
         {
-            size_t entry_byte_size = (size_t)archive_entry_size(entry);
-            size_t entry_byte_offset = last_file_offset + (size_t)(firstblock_buff - last_file_buff);
-            const char* entryname = archive_entry_pathname(entry);
-            strcpy(packfs_ctx->filenames + filenames_lens_total, entryname);
-            packfs_ctx->filenames_lens[packfs_ctx->files_num] = strlen(entryname);
-            packfs_ctx->offsets[packfs_ctx->files_num] = entry_byte_offset;
-            packfs_ctx->sizes[packfs_ctx->files_num] = entry_byte_size;
-            filenames_lens_total += packfs_ctx->filenames_lens[packfs_ctx->files_num] + 1;
-            packfs_ctx->files_num++;
+            int fd = open(filename, O_RDONLY);
+            if(fd < 0) return -1;
+            struct stat file_info; assert(fstat(fd, &file_info) >= 0);
+            packfs_ctx->mmapsize = file_info.st_size;
+            packfs_ctx->fileptr = mmap(NULL, packfs_ctx->mmapsize, PROT_READ, MAP_PRIVATE, fd, 0);
+            close(fd);
         }
-            
-        r = archive_read_data_skip(a);
-        if (r == ARCHIVE_EOF) break;
-        if (r != ARCHIVE_OK) { fprintf(stderr, "%s\n", archive_error_string(a)); return -1; }
-    }
-    assert(ARCHIVE_OK == archive_read_close(a));
-    assert(ARCHIVE_OK == archive_read_free(a));
+        else
+        {
+            packfs_ctx->mmapsize = 0;
+            packfs_ctx->fileptr = fopen(filename, "rb");
+        }
+
+        struct archive *a = archive_read_new();
+        archive_read_support_format_zip(a);
+        assert(ARCHIVE_OK == archive_read_open_filename(a, filename, 10240));
+        
+        // struct archive_read in https://github.com/libarchive/libarchive/blob/master/libarchive/archive_read_private.h
+        struct archive_read *_a = ((struct archive_read *)a);
+        old_file_read = _a->client.reader;
+        old_file_seek = _a->client.seeker;
+        a->state = ARCHIVE_STATE_NEW;
+        archive_read_set_read_callback(a, new_file_read);
+        assert(ARCHIVE_OK ==  archive_read_open1(a));
+        
+        size_t filenames_lens_total = 0;
+        for(;;)
+        {
+            struct archive_entry *entry;
+            int r = archive_read_next_header(a, &entry);
+            if (r == ARCHIVE_EOF) break;
+            if (r != ARCHIVE_OK) { fprintf(stderr, "%s\n", archive_error_string(a)); return -1; }
+            const void* firstblock_buff;
+            size_t firstblock_len;
+            int64_t firstblock_offset;
+            r = archive_read_data_block(a, &firstblock_buff, &firstblock_len, &firstblock_offset);
+            int filetype = archive_entry_filetype(entry);
+            if(filetype == AE_IFREG && archive_entry_size_is_set(entry) != 0 && last_file_buff != NULL && last_file_buff <= firstblock_buff && firstblock_buff < last_file_buff + last_file_block_size)
+            {
+                size_t entry_byte_size = (size_t)archive_entry_size(entry);
+                size_t entry_byte_offset = last_file_offset + (size_t)(firstblock_buff - last_file_buff);
+                const char* entryname = archive_entry_pathname(entry);
+                strcpy(packfs_ctx->filenames + filenames_lens_total, entryname);
+                packfs_ctx->filenames_lens[packfs_ctx->files_num] = strlen(entryname);
+                packfs_ctx->offsets[packfs_ctx->files_num] = entry_byte_offset;
+                packfs_ctx->sizes[packfs_ctx->files_num] = entry_byte_size;
+                filenames_lens_total += packfs_ctx->filenames_lens[packfs_ctx->files_num] + 1;
+                packfs_ctx->files_num++;
+            }
+                
+            r = archive_read_data_skip(a);
+            if (r == ARCHIVE_EOF) break;
+            if (r != ARCHIVE_OK) { fprintf(stderr, "%s\n", archive_error_string(a)); return -1; }
+        }
+        assert(ARCHIVE_OK == archive_read_close(a));
+        assert(ARCHIVE_OK == archive_read_free(a));
 #endif
+    }
 
     return &packfs_ctx;
 }
@@ -199,7 +194,7 @@ int packfs_open(struct packfs_context* packfs_ctx, const char* path, FILE** out)
 {
     path = packfs_sanitize_path(path);
     
-#if PACKFS_LIBARCHIVE
+#if PACKFS_NEXT_LIBARCHIVE
     if(0 != strcmp("rb", mode))
         return NULL;
     size_t filenames_start = 0;
