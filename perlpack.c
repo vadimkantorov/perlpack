@@ -111,9 +111,9 @@ struct packfs_context* packfs_ensure_context()
         struct archive *a = archive_read_new();
         archive_read_support_format_zip(a);
         struct archive_entry *entry;
+        const char* packfs_archive_filename = getenv("PACKFSLIBARCHIVE");
         do
         {
-            const char* packfs_archive_filename = getenv("PACKFSLIBARCHIVE");
             if(packfs_archive_filename == NULL || strlen(packfs_archive_filename) == 0 || strncmp(packfs_ctx.packfs_prefix_archive, packfs_archive_filename, strlen(packfs_ctx.packfs_prefix_archive)) == 0)
                 break;
             
@@ -204,12 +204,10 @@ int packfs_open(struct packfs_context* packfs_ctx, const char* path, FILE** out)
     path = packfs_sanitize_path(path);
 
     FILE* fileptr = NULL;
-    if(out != NULL)
-        *out = fileptr;
     
-    if(packfs_ctx->packfsinfosnum != 0 && strncmp(packfs_ctx->packfs_prefix_builtin, path, strlen(packfs_ctx->packfs_prefix_builtin)) != 0)
+    if(packfs_ctx->packfsinfosnum > 0 && strncmp(packfs_ctx->packfs_prefix_builtin, path, strlen(packfs_ctx->packfs_prefix_builtin)) == 0)
     {
-        for(int i = 0; i < packfs_ctx->packfsinfosnum; i++)
+        for(size_t i = 0; i < packfs_ctx->packfsinfosnum; i++)
         {
             if(0 == strcmp(path, packfs_ctx->packfsinfos[i].path))
             {
@@ -220,7 +218,7 @@ int packfs_open(struct packfs_context* packfs_ctx, const char* path, FILE** out)
     }
 
 #if PACKFSLIBARCHIVE
-    else if(packfs_ctx->fileptr != NULL && strncmp(packfs_ctx->packfs_prefix_archive, path, strlen(packfs_ctx->packfs_prefix_archive)) != 0)
+    else if(packfs_ctx->files_num > 0 && strncmp(packfs_ctx->packfs_prefix_archive, path, strlen(packfs_ctx->packfs_prefix_archive)) == 0)
     {
         const char* path_without_prefix = path + strlen(packfs_ctx->packfs_prefix_archive);
         size_t filenames_start = 0;
@@ -253,14 +251,15 @@ int packfs_open(struct packfs_context* packfs_ctx, const char* path, FILE** out)
     }
 #endif
     
-    for(int k = 0; fileptr != NULL && k < packfs_filefd_max - packfs_filefd_min; k++)
+    if(out != NULL)
+        *out = fileptr;
+
+    for(size_t k = 0; fileptr != NULL && k < packfs_filefd_max - packfs_filefd_min; k++)
     {
         if(packfs_ctx->packfs_filefd[k] == 0)
         {
             packfs_ctx->packfs_filefd[k] = packfs_filefd_min + k;
             packfs_ctx->packfs_fileptr[k] = fileptr;
-            if(out != NULL)
-                *out = packfs_ctx->packfs_fileptr[k];
             return packfs_ctx->packfs_filefd[k];
         }
     }

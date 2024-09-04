@@ -25,4 +25,4 @@ Primer on static build of Perl
 - https://github.com/xsawyerx/xs-fun
 - https://perldoc.perl.org/perlxs
 - https://perldoc.perl.org/perlapi
--
+- https://stackoverflow.com/questions/10763394/how-to-build-a-c-program-using-a-custom-version-of-glibc-and-static-linking
