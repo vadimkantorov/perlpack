@@ -58,6 +58,8 @@ struct packfs_context
     int (*orig_access)(const char *path, int flags);
     off_t (*orig_lseek)(int fd, off_t offset, int whence);
     int (*orig_stat)(const char *restrict path, struct stat *restrict statbuf);
+    int (*orig_lstat)(const char *path, struct stat* statbuf);
+    int (*orig_fstat)(int fd, struct stat * statbuf);
     FILE* (*orig_fopen)(const char *path, const char *mode);
     int (*orig_fileno)(FILE* stream);
     
@@ -84,6 +86,8 @@ struct packfs_context* packfs_ensure_context()
         extern int orig_access(const char *path, int flags); packfs_ctx.orig_access = orig_access;
         extern off_t orig_lseek(int fd, off_t offset, int whence); packfs_ctx.orig_lseek = orig_lseek;
         extern int orig_stat(const char *restrict path, struct stat *restrict statbuf); packfs_ctx.orig_stat = orig_stat;
+        extern int orig_lstat(const char *path, struct stat* statbuf); packfs_ctx.orig_lstat = orig_lstat;
+        extern int orig_fstat(int fd, struct stat * statbuf); packfs_ctx.orig_fstat = orig_fstat;
         extern FILE* orig_fopen(const char *path, const char *mode); packfs_ctx.orig_fopen = orig_fopen;
         extern int orig_fileno(FILE* stream); packfs_ctx.orig_fileno = orig_fileno;
 #else
@@ -94,6 +98,8 @@ struct packfs_context* packfs_ensure_context()
         packfs_ctx.orig_access = dlsym(RTLD_NEXT, "access");
         packfs_ctx.orig_lseek  = dlsym(RTLD_NEXT, "lseek");
         packfs_ctx.orig_stat   = dlsym(RTLD_NEXT, "stat");
+        packfs_ctx.orig_lstat   = dlsym(RTLD_NEXT,"lstat");
+        packfs_ctx.orig_fstat   = dlsym(RTLD_NEXT,"fstat");
         packfs_ctx.orig_fopen  = dlsym(RTLD_NEXT, "fopen");
         packfs_ctx.orig_fileno = dlsym(RTLD_NEXT, "fileno");
 #endif
@@ -541,6 +547,24 @@ int stat(const char *restrict path, struct stat *restrict statbuf)
     res = packfs_ctx->orig_stat(path, statbuf);
 #ifdef PACKFS_LOG
     fprintf(stderr, "packfs: stat(\"%s\", %p) == %d\n", path, (void*)statbuf, res);
+#endif
+    return res;
+}
+
+int fstat(int fd, struct stat * statbuf)
+{
+    res = packfs_ctx->orig_fstat(fd, statbuf);
+#ifdef PACKFS_LOG
+    fprintf(stderr, "packfs: fstat(%d, %p) == %d\n", fd, (void*)statbuf, res);
+#endif
+    return res;
+}
+
+int lstat(const char *path, struct stat* statbuf)
+{
+    res = packfs_ctx->orig_lstat(path, statbuf);
+#ifdef PACKFS_LOG
+    fprintf(stderr, "packfs: lstat(\"%s\", %p) == %d\n", path, (void*)statbuf, res);
 #endif
     return res;
 }
