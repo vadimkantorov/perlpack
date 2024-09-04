@@ -31,8 +31,10 @@ jobs:
       - name: Test Native Perl
         run: |
           make perlpackstatic && zip foo.zip perlpack.c
-          PERLPACKISO=foo.zip ./perlpackstatic
-          PERLPACKISO=foo.zip ./perlpackstatic -e 'use Cwd; print(Cwd::cwd(), "\n");'
+          ./perlpackstatic
+          ./perlpackstatic -e 'use Cwd; print(Cwd::cwd(), "\n");'
+          ./perlpackstatic -e 'open (F,"<","/mnt/perlpack/lib/5.35.4/x86_64-linux/Cwd.pm");print(<F>);'
+          PACKFSLIBARCHIVE=foo.zip ./perlpackstatic -e 'open (F,"<","/mnt/perlpackarchive/perlpack.c");print(<F>);'
        
       - name: Artifacts
         uses: actions/upload-artifact@v4

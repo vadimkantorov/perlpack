@@ -15,3 +15,14 @@ Primer on static build of Perl
 - https://linux.die.net/man/1/perliol
 - https://docs.mojolicious.org/perliol
 - https://stackoverflow.com/questions/12729545/why-is-this-xs-code-that-returns-a-perlio-leaky
+- https://perldoc.perl.org/perlembed
+- https://perldoc.perl.org/perlguts
+- https://www.perlmonks.org/?node_id=385469
+- https://github.com/Perl/perl5/commit/0301e899536a22752f40481d8a1d141b7a7dda82
+- https://github.com/Perl/perl5/issues/16565
+- https://www.postgresql.org/message-id/23260.1527026547%40sss.pgh.pa.us
+- https://medium.com/booking-com-development/native-extensions-for-perl-without-smoke-and-mirrors-40479999dfc8
+- https://github.com/xsawyerx/xs-fun
+- https://perldoc.perl.org/perlxs
+- https://perldoc.perl.org/perlapi
+-

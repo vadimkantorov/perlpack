@@ -1,14 +1,3 @@
-// https://perldoc.perl.org/perlembed
-// https://perldoc.perl.org/perlguts
-// https://www.perlmonks.org/?node_id=385469
-// https://github.com/Perl/perl5/commit/0301e899536a22752f40481d8a1d141b7a7dda82
-// https://github.com/Perl/perl5/issues/16565
-// https://www.postgresql.org/message-id/23260.1527026547%40sss.pgh.pa.us
-// https://medium.com/booking-com-development/native-extensions-for-perl-without-smoke-and-mirrors-40479999dfc8
-// https://github.com/xsawyerx/xs-fun
-// https://perldoc.perl.org/perlxs
-// https://perldoc.perl.org/perlapi
-
 #define _GNU_SOURCE
 #include <string.h>
 #include <stdio.h>
@@ -22,16 +11,7 @@
 #include <sys/mman.h>
 #include <sys/types.h>
 
-#include <EXTERN.h>
-#include <perl.h>
-#include <XSUB.h>
-
-static char script[1 << 20] = "print('Hello world! Need more arguments!\n');";
-extern char _binary_myscript_pl_start[];
-extern char _binary_myscript_pl_end[];
-
-
-#ifdef PACKFS_LIBARCHIVE
+#ifdef PACKFSLIBARCHIVE
 #include <archive.h>
 #include <archive_entry.h>
 // define required for #include <archive_read_private.h>
@@ -47,12 +27,25 @@ static ssize_t new_file_read(struct archive *a, void *client_data, const void **
     last_file_offset = old_file_seek(a, client_data, 0, SEEK_CUR);
     return old_file_read(a, client_data, buff);
 }
-
 #endif
+
+#include <EXTERN.h>
+#include <perl.h>
+#include <XSUB.h>
+
+static char script[1 << 20] = "print('Hello world! Need more arguments!\n');";
+extern char _binary_myscript_pl_start[];
+extern char _binary_myscript_pl_end[];
 
 #include "perlpack.h"
 
-enum {packfs_filefd_min = 1000000000, packfs_filefd_max = 1000001000, packfs_index_filenames_num = 1024,  packfs_index_filenames_len = 128, packfs_use_mmap = 0};
+enum {
+    packfs_filefd_min = 1000000000, 
+    packfs_filefd_max = 1000001000, 
+    packfs_index_filenames_num = 1024,  
+    packfs_index_filenames_len = 128, 
+    packfs_archive_use_mmap = 0
+};
 struct packfs_context
 {
     int initialized;
@@ -78,10 +71,6 @@ struct packfs_context
     size_t files_num, filenames_lens[packfs_index_filenames_num], offsets[packfs_index_filenames_num], sizes[packfs_index_filenames_num];
 };
 
-//#ifndef PACKFS_STATIC
-//#include <dlfcn.h>
-//#endif
-
 struct packfs_context* packfs_ensure_context()
 {
     static struct packfs_context packfs_ctx = {0};
@@ -89,8 +78,6 @@ struct packfs_context* packfs_ensure_context()
     if(packfs_ctx.initialized != 1)
     {
 #ifdef PACKFS_STATIC
-        #include <dlfcn.h>
-
         extern int orig_open(const char *path, int flags); packfs_ctx.orig_open = orig_open;
         extern int orig_close(int fd); packfs_ctx.orig_close = orig_close;
         extern ssize_t orig_read(int fd, void* buf, size_t count); packfs_ctx.orig_read = orig_read;
@@ -100,6 +87,7 @@ struct packfs_context* packfs_ensure_context()
         extern FILE* orig_fopen(const char *path, const char *mode); packfs_ctx.orig_fopen = orig_fopen;
         extern int orig_fileno(FILE* stream); packfs_ctx.orig_fileno = orig_fileno;
 #else
+        #include <dlfcn.h>
         packfs_ctx.orig_open   = dlsym(RTLD_NEXT, "open");
         packfs_ctx.orig_close  = dlsym(RTLD_NEXT, "close");
         packfs_ctx.orig_read   = dlsym(RTLD_NEXT, "read");
@@ -119,21 +107,21 @@ struct packfs_context* packfs_ensure_context()
         packfs_ctx.fileptr = NULL;
         packfs_ctx.initialized = 1;
         
-#ifdef PACKFS_LIBARCHIVE
+#ifdef PACKFSLIBARCHIVE
         struct archive *a = archive_read_new();
         archive_read_support_format_zip(a);
         struct archive_entry *entry;
         do
         {
-            const char* packfs_archive_filename = getenv("PERLPACKISO");
-            if(packfs_archive_filename == NULL || strlen(packfs_archive_filename) == 0 || strncmp(packfs_archive_filename, packfs_ctx.packfs_prefix_archive, strlen(packfs_ctx.packfs_prefix_archive)) == 0)
+            const char* packfs_archive_filename = getenv("PACKFSLIBARCHIVE");
+            if(packfs_archive_filename == NULL || strlen(packfs_archive_filename) == 0 || strncmp(packfs_ctx.packfs_prefix_archive, packfs_archive_filename, strlen(packfs_ctx.packfs_prefix_archive)) == 0)
                 break;
             
             int fd = open(packfs_archive_filename, O_RDONLY);
             struct stat file_info = {0}; 
             if(fd >= 0 && fstat(fd, &file_info) >= 0)
             {
-                if(packfs_use_mmap)
+                if(packfs_archive_use_mmap)
                 {
                     packfs_ctx.mmapsize = file_info.st_size;
                     packfs_ctx.fileptr = mmap(NULL, packfs_ctx.mmapsize, PROT_READ, MAP_PRIVATE, fd, 0);
@@ -214,58 +202,66 @@ const char* packfs_sanitize_path(const char* path)
 int packfs_open(struct packfs_context* packfs_ctx, const char* path, FILE** out)
 {
     path = packfs_sanitize_path(path);
+
+    FILE* fileptr = NULL;
+    if(out != NULL)
+        *out = fileptr;
     
-#if PACKFS_NEXT_LIBARCHIVE
-    if(0 != strcmp("rb", mode))
-        return NULL;
-    size_t filenames_start = 0;
-    for(size_t i = 0; i < index->files_num; i++)
+    if(packfs_ctx->packfsinfosnum != 0 && strncmp(packfs_ctx->packfs_prefix_builtin, path, strlen(packfs_ctx->packfs_prefix_builtin)) != 0)
     {
-        if(0 == strcmp(packfs_ctx->filenames + filenames_start, packfs_archive_filename))
+        for(int i = 0; i < packfs_ctx->packfsinfosnum; i++)
         {
-            size_t offset = packfs_ctx->offsets[i], size = packfs_ctx->sizes[i];
-            if(packfs_ctx->mmapsize != 0)
-                return fmemopen((char*)packfs_ctx->fileptr + offset, size, "rb");
-            else
+            if(0 == strcmp(path, packfs_ctx->packfsinfos[i].path))
             {
-                FILE* f = fmemopen(NULL, size, "rb+");
-                fseek((FILE*)packfs_ctx->fileptr, offset, SEEK_SET);
-                char buf[8192];
-                while(size > 0)
-                {
-                    size_t len = fread(buf, 1, sizeof(buf) <= size ? sizeof(buf) : size, (FILE*)packfs_ctx->fileptr);
-                    fwrite(buf, 1, len, f);
-                    size -= len;
-                }
-                fseek(f, 0, SEEK_SET);
-                return f;
+                fileptr = fmemopen((void*)packfs_ctx->packfsinfos[i].start, (size_t)(packfs_ctx->packfsinfos[i].end - packfs_ctx->packfsinfos[i].start), "r");
+                break;
             }
         }
-        filenames_start += packfs_ctx->filenames_lens[i] + 1;
+    }
+
+#if PACKFSLIBARCHIVE
+    else if(packfs_ctx->fileptr != NULL && strncmp(packfs_ctx->packfs_prefix_archive, path, strlen(packfs_ctx->packfs_prefix_archive)) != 0)
+    {
+        const char* path_without_prefix = path + strlen(packfs_ctx->packfs_prefix_archive);
+        size_t filenames_start = 0;
+        for(size_t i = 0; i < packfs_ctx->files_num; i++)
+        {
+            if(0 == strcmp(packfs_ctx->filenames + filenames_start, path_without_prefix))
+            {
+                size_t offset = packfs_ctx->offsets[i], size = packfs_ctx->sizes[i];
+                if(packfs_ctx->mmapsize != 0)
+                {
+                    fileptr = fmemopen((char*)packfs_ctx->fileptr + offset, size, "rb");
+                }
+                else
+                {
+                    fileptr = fmemopen(NULL, size, "rb+");
+                    fseek((FILE*)packfs_ctx->fileptr, offset, SEEK_SET);
+                    char buf[8192];
+                    while(size > 0)
+                    {
+                        size_t len = fread(buf, 1, sizeof(buf) <= size ? sizeof(buf) : size, (FILE*)packfs_ctx->fileptr);
+                        fwrite(buf, 1, len, fileptr);
+                        size -= len;
+                    }
+                    fseek(fileptr, 0, SEEK_SET);
+                }
+                break;
+            }
+            filenames_start += packfs_ctx->filenames_lens[i] + 1;
+        }
     }
 #endif
-
     
-    if(strncmp(packfs_ctx->packfs_prefix_builtin, path, strlen(packfs_ctx->packfs_prefix_builtin)) != 0)
-        return -1;
-
-    for(int i = 0; i < packfs_ctx->packfsinfosnum; i++)
+    for(int k = 0; fileptr != NULL && k < packfs_filefd_max - packfs_filefd_min; k++)
     {
-        if(0 == strcmp(path, packfs_ctx->packfsinfos[i].path))
+        if(packfs_ctx->packfs_filefd[k] == 0)
         {
-            FILE* res = fmemopen((void*)packfs_ctx->packfsinfos[i].start, (size_t)(packfs_ctx->packfsinfos[i].end - packfs_ctx->packfsinfos[i].start), "r");
-            
-            for(int k = 0; k < packfs_filefd_max - packfs_filefd_min; k++)
-            {
-                if(packfs_ctx->packfs_filefd[k] == 0)
-                {
-                    packfs_ctx->packfs_filefd[k] = packfs_filefd_min + k;
-                    packfs_ctx->packfs_fileptr[k] = res;
-                    if(out != NULL)
-                        *out = packfs_ctx->packfs_fileptr[k];
-                    return packfs_ctx->packfs_filefd[k];
-                }
-            }
+            packfs_ctx->packfs_filefd[k] = packfs_filefd_min + k;
+            packfs_ctx->packfs_fileptr[k] = fileptr;
+            if(out != NULL)
+                *out = packfs_ctx->packfs_fileptr[k];
+            return packfs_ctx->packfs_filefd[k];
         }
     }
 
@@ -754,8 +750,8 @@ int main(int argc, char *argv[], char* envp[])
 {
     if(argc > 1 && 0 == strcmp("myscript.pl", argv[1]))
     {
-        int iSize = (int)(_binary_myscript_pl_end - _binary_myscript_pl_start);
-        strncpy(script,    _binary_myscript_pl_start, iSize);
+        size_t iSize = _binary_myscript_pl_end - _binary_myscript_pl_start;
+        strncpy(script, _binary_myscript_pl_start, iSize);
         script[iSize] = '\0';
     }
     else if(argc > 2 && 0 == strcmp("-e", argv[1]))
