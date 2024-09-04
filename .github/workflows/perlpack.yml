@@ -31,6 +31,8 @@ jobs:
       
       - name: Test Native Perl
         run: |
+          strace -f perl -e 'open(F,"<","Makefile");print(<F>);'
+          strace -f perl -e 'open(F,"<","Makefile");$line=<F>;print($line);'
           make perlpackstatic && zip -0 foo.zip perlpack.c
           ./perlpackstatic
           ./perlpackstatic -e 'use Cwd;print(Cwd::cwd(),"\n");'
