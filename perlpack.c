@@ -78,9 +78,9 @@ struct packfs_context
     size_t files_num, filenames_lens[packfs_index_filenames_num], offsets[packfs_index_filenames_num], sizes[packfs_index_filenames_num];
 };
 
-#ifndef PACKFS_STATIC
-#include <dlfcn.h>
-#endif
+//#ifndef PACKFS_STATIC
+//#include <dlfcn.h>
+//#endif
 
 struct packfs_context* packfs_ensure_context()
 {
@@ -89,6 +89,8 @@ struct packfs_context* packfs_ensure_context()
     if(packfs_ctx.initialized != 1)
     {
 #ifdef PACKFS_STATIC
+        #include <dlfcn.h>
+
         extern int orig_open(const char *path, int flags); packfs_ctx.orig_open = orig_open;
         extern int orig_close(int fd); packfs_ctx.orig_close = orig_close;
         extern ssize_t orig_read(int fd, void* buf, size_t count); packfs_ctx.orig_read = orig_read;
@@ -109,7 +111,7 @@ struct packfs_context* packfs_ensure_context()
 #endif
         strcpy(packfs_ctx.packfs_prefix_builtin, "/mnt/perlpack/");
         strcpy(packfs_ctx.packfs_prefix_archive, "/mnt/perlpackarchive/");
-
+        // TODO: disable this assignment if prefix unset
         packfs_ctx.packfsinfosnum = packfsinfosnum;
         packfs_ctx.packfsinfos = packfsinfos;
         packfs_ctx.files_num = 0;
