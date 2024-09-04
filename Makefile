@@ -15,16 +15,18 @@ build/libperl.a:
 
 libc_perlpack.a:
 	cp $(shell $(CC) -print-file-name=libc.a) $@
-	$(AR) x $@  open.lo close.lo read.lo stat.lo lseek.lo access.lo fopen.lo fileno.lo
+	$(AR) x $@  open.lo close.lo read.lo stat.lo fstat.lo lstat.lo lseek.lo access.lo fopen.lo fileno.lo
 	$(OBJCOPY) --redefine-sym open=orig_open     open.lo
 	$(OBJCOPY) --redefine-sym close=orig_close   close.lo
 	$(OBJCOPY) --redefine-sym read=orig_read     read.lo
 	$(OBJCOPY) --redefine-sym stat=orig_stat     stat.lo
+	$(OBJCOPY) --redefine-sym fstat=orig_fstat   fstat.lo
+	$(OBJCOPY) --redefine-sym lstat=orig_lstat   lstat.lo
 	$(OBJCOPY) --redefine-sym lseek=orig_lseek   lseek.lo
 	$(OBJCOPY) --redefine-sym access=orig_access access.lo
 	$(OBJCOPY) --redefine-sym fopen=orig_fopen   fopen.lo
 	$(OBJCOPY) --redefine-sym fileno=orig_fileno fileno.lo
-	$(AR) rs $@ open.lo close.lo read.lo stat.lo lseek.lo access.lo fopen.lo fileno.lo
+	$(AR) rs $@ open.lo close.lo read.lo stat.lo fstat.lo lstat.lo lseek.lo access.lo fopen.lo fileno.lo
 
 perlpackstatic:
 	rm -rf packfs/man packfs/lib/*/pod/
