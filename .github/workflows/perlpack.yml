@@ -32,13 +32,10 @@ jobs:
       - name: Test Native Perl
         run: |
           make perlpackstatic && zip foo.zip perlpack.c
-          ./perlpackstatic; echo $?
-          ./perlpackstatic -e 'use Cwd;print(Cwd::cwd(),"\n");'; echo $?
-          ./perlpackstatic -e 'print(123,"\n")'; echo $?
-          ./perlpackstatic -e 'open(F,"<","/mnt/perlpack/lib/5.35.4/x86_64-linux/Cwd.pm");print(<F>);'; echo $?
-          ./perlpackstatic -e 'print(456,"\n")'; echo $?
-          PACKFSLIBARCHIVE=foo.zip ./perlpackstatic -e 'open(F,"<","/mnt/perlpackarchive/perlpack.c");print(<F>);'; echo $?
-          ./perlpackstatic -e 'print(789,"\n")'; echo $?
+          ./perlpackstatic
+          ./perlpackstatic -e 'print(123,"\n");use Cwd;print(Cwd::cwd(),"\n");print(123,"\n");'
+          ./perlpackstatic -e 'print(456,"\n");open(F,"<","/mnt/perlpack/lib/5.35.4/x86_64-linux/Cwd.pm");print(<F>);print(456,"\n");'
+          PACKFSLIBARCHIVE=foo.zip ./perlpackstatic -e 'print(789,"\n");open(F,"<","/mnt/perlpackarchive/perlpack.c");print(<F>);print(789,"\n");'; echo $?
        
       - name: Artifacts
         uses: actions/upload-artifact@v4

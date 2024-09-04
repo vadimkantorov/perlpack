@@ -14,15 +14,18 @@ assert os.path.exists(args.input_path) and os.path.isdir(args.input_path) and ar
 
 os.makedirs(args.output_path + '.o', exist_ok = True)
 
-objects, files, dirs = [], [], []
+objects, files, dirs, safepaths, relpaths = [], [], [], [], []
 for (dirpath, dirnames, filenames) in os.walk(args.input_path):
     dirs.extend(os.path.join(dirpath, dirname) for dirname in dirnames)
     for basename in filenames:
         p = os.path.join(dirpath, basename)
+        safepath = p.translate(translate)
+        relpath = p.split(os.path.sep, maxsplit=1)[-1]
         assert not os.path.isabs(p)
         files.append(p)
-        safe_path = p.translate(translate)
-        objects.append(os.path.join(args.output_path + '.o', safe_path + '.o'))
+        safepaths.append(safepath)
+        relpaths.append(relpath)
+        objects.append(os.path.join(args.output_path + '.o', safepath + '.o'))
         subprocess.check_call(['ld', '-r', '-b', 'binary', '-o', objects[-1], files[-1]])
 
 # problem: can produce the same symbol name because of this mapping
@@ -31,14 +34,20 @@ f = open(args.output_path + '.txt', 'w')
 print('\n'.join(objects), file = f)
 
 f = open(args.output_path, 'w')
-print(f'int packfsinfosnum = {len(files)} + {len(dirs)};', file=f)
-print('\n'.join(f'extern char _binary_{safe_path}_start[], _binary_{safe_path}_end[];' for p in files for safe_path in [p.translate(translate)]),  file=f)
-print('struct { const char* safe_path; const char *path; const char* start; const char* end; int isdir; } packfsinfos[] = {', file=f)
-for p in files:
-    ppp = p.split(os.path.sep, maxsplit=1)[-1]
-    safe_path = p.translate(translate)
-    print('{ "' + repr(safe_path)[1:-1] + '", "' + repr(os.path.join(args.prefix, ppp ))[1:-1] + f'", _binary_{safe_path}_start, _binary_{safe_path}_end', ', 0 },', file=f)
-for p in dirs:
-    ppp = p.split(os.path.sep, maxsplit=1)[-1]
-    print('{ NULL, "' + repr(os.path.join(args.prefix, ppp))[1:-1] + '", NULL, NULL', ', 1 },', file=f)
+print(f'int packfsinfosnum = {len(files)};', file=f)# + {len(dirs)}
+print('\n'.join(f'extern char _binary_{safepath}_start[], _binary_{safepath}_end[];' for safepath safepaths),  file=f)
+print('struct { const char* safepath; const char *path; const char* start; const char* end; int isdir; } packfsinfos[] = {', file=f)
+for p, relpath, safepath in zip(files, relpaths, safepaths):
+    print('{ "' + repr(safepath)[1:-1] + '", "' + repr(os.path.join(args.prefix, relpath))[1:-1] + f'", _binary_{safepath}_start, _binary_{safepath}_end', ', 0 },', file=f)
+
+#for p in dirs:
+#    relpath = p.split(os.path.sep, maxsplit=1)[-1]
+#    print('{ NULL, "' + repr(os.path.join(args.prefix, relpath))[1:-1] + '", NULL, NULL', ', 1 },', file=f)
 print('};', file=f)
+
+fmtstrlist = lambda arr: repr(arr).replace("'", '"').replace('[', '{').replace(']', '}')
+
+print('const char* safepaths[] =', fmtstrlist(safepaths), ';', file=f)
+print('const char* starts[] = {', ', '.join(f'_binary_{safepath}_start' for safepath in safepaths), '} ;', file=f)
+print('const char* ends[] = {', ', '.join(f'_binary_{safepath}_end' for safepath in safepaths), '} ;', file=f)
+print('const char* abspaths[] =' , fmtstrlist([os.path.join(args.prefix, relpath) for relpath in safepaths]), ';', file=f)
