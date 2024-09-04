@@ -3,6 +3,7 @@ name: perlpack
 on: workflow_dispatch
 
 env:
+  MAKEFLAGS: -j2
   URLPERL: https://www.cpan.org/src/5.0/perl-5.35.4.tar.gz
   ###
   MODULES_def: -DPERLPACK_mro -DPERLPACK_Devel__Peek -DPERLPACK_File__DosGlob -DPERLPACK_File__Glob -DPERLPACK_Sys__Syslog -DPERLPACK_Sys__Hostname -DPERLPACK_PerlIO__via -DPERLPACK_PerlIO__mmap -DPERLPACK_PerlIO__encoding -DPERLPACK_PerlIO__scalar -DPERLPACK_B -DPERLPACK_attributes -DPERLPACK_Unicode__Normalize -DPERLPACK_Unicode__Collate -DPERLPACK_threads -DPERLPACK_threads__shared -DPERLPACK_IPC__SysV -DPERLPACK_re -DPERLPACK_Digest__MD5 -DPERLPACK_Digest__SHA -DPERLPACK_SDBM_File -DPERLPACK_Math__BigInt__FastCalc -DPERLPACK_Data__Dumper -DPERLPACK_I18N__Langinfo -DPERLPACK_Time__HiRes -DPERLPACK_Time__Piece -DPERLPACK_IO -DPERLPACK_Socket -DPERLPACK_Hash__Util__FieldHash -DPERLPACK_Hash__Util -DPERLPACK_Filter__Util__Call -DPERLPACK_POSIX -DPERLPACK_Encode__Unicode -DPERLPACK_Encode -DPERLPACK_Encode__JP -DPERLPACK_Encode__KR -DPERLPACK_Encode__CN -DPERLPACK_Encode__Symbol -DPERLPACK_Encode__Byte -DPERLPACK_Encode__TW -DPERLPACK_Compress__Raw__Zlib -DPERLPACK_Compress__Raw__Bzip2 -DPERLPACK_MIME__Base64 -DPERLPACK_Cwd -DPERLPACK_Storable -DPERLPACK_List__Util -DPERLPACK_Fcntl -DPERLPACK_Opcode
@@ -20,7 +21,7 @@ jobs:
       - uses: actions/checkout@v4
       
       - name: Build libarchive
-        run: git clone --depth 1 --single-branch https://github.com/libarchive/libarchive && make libarchive/.libs/libarchive.a
+        run: git clone --single-branch --depth 1 https://github.com/libarchive/libarchive && make libarchive/.libs/libarchive.a
 
       - name: Build libc_perlpack.a
         run: make libc_perlpack.a
