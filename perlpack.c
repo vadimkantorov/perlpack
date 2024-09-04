@@ -553,7 +553,9 @@ int stat(const char *restrict path, struct stat *restrict statbuf)
 
 int fstat(int fd, struct stat * statbuf)
 {
-    res = packfs_ctx->orig_fstat(fd, statbuf);
+    struct packfs_context* packfs_ctx = packfs_ensure_context();
+    
+    int res = packfs_ctx->orig_fstat(fd, statbuf);
 #ifdef PACKFS_LOG
     fprintf(stderr, "packfs: fstat(%d, %p) == %d\n", fd, (void*)statbuf, res);
 #endif
@@ -562,7 +564,9 @@ int fstat(int fd, struct stat * statbuf)
 
 int lstat(const char *path, struct stat* statbuf)
 {
-    res = packfs_ctx->orig_lstat(path, statbuf);
+    struct packfs_context* packfs_ctx = packfs_ensure_context();
+    
+    int res = packfs_ctx->orig_lstat(path, statbuf);
 #ifdef PACKFS_LOG
     fprintf(stderr, "packfs: lstat(\"%s\", %p) == %d\n", path, (void*)statbuf, res);
 #endif
