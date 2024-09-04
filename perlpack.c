@@ -64,6 +64,7 @@ struct packfs_context
     int (*orig_fileno)(FILE* stream);
     
     int packfsinfosnum;
+    const char** packfsinfos_starts;
     struct { const char* safe_path; const char *path; const char* start; const char* end; int isdir; }* packfsinfos;
     int packfs_filefd[packfs_filefd_max - packfs_filefd_min];
     FILE* packfs_fileptr[packfs_filefd_max - packfs_filefd_min];
@@ -108,6 +109,7 @@ struct packfs_context* packfs_ensure_context()
         // TODO: disable this assignment if prefix unset
         packfs_ctx.packfsinfosnum = packfsinfosnum;
         packfs_ctx.packfsinfos = packfsinfos;
+        packfs_ctx.packfsinfos_starts = packfs_starts;
         packfs_ctx.files_num = 0;
         packfs_ctx.mmapsize = 0;
         packfs_ctx.fileptr = NULL;

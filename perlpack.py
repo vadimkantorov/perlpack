@@ -45,9 +45,9 @@ for p, relpath, safepath in zip(files, relpaths, safepaths):
 #    print('{ NULL, "' + repr(os.path.join(args.prefix, relpath))[1:-1] + '", NULL, NULL', ', 1 },', file=f)
 print('};', file=f)
 
-fmtstrlist = lambda arr: repr(arr).replace("'", '"').replace('[', '{').replace(']', '}')
+fmtstrlist = lambda arr: repr(arr).replace("'", '"').replace('[', '{').replace(']', '}').replace(' ', '\n')
 
-print('const char* safepaths[] =', fmtstrlist(safepaths), ';', file=f)
-print('const char* starts[] = {', ', '.join(f'_binary_{safepath}_start' for safepath in safepaths), '} ;', file=f)
-print('const char* ends[] = {', ', '.join(f'_binary_{safepath}_end' for safepath in safepaths), '} ;', file=f)
-print('const char* abspaths[] =' , fmtstrlist([os.path.join(args.prefix, relpath) for relpath in safepaths]), ';', file=f)
+print('const char* packfs_safepaths[] =', fmtstrlist(safepaths), ';', file=f)
+print('const char* packfs_abspaths[] =' , fmtstrlist([os.path.join(args.prefix, relpath) for relpath in safepaths]), ';', file=f)
+print('const char* packfs_starts[] = {', ',\n'.join(f'_binary_{safepath}_start' for safepath in safepaths), '} ;', file=f)
+print('const char* packfs_ends[] = {', ',\n'.join(f'_binary_{safepath}_end' for safepath in safepaths), '} ;', file=f)
