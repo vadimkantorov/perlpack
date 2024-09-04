@@ -34,8 +34,8 @@ jobs:
           make perlpackstatic && zip foo.zip perlpack.c
           ./perlpackstatic
           ./perlpackstatic -e 'print(123,"\n");use Cwd;print(Cwd::cwd(),"\n");print(123,"\n");'
-          ./perlpackstatic -e 'print(456,"\n");open(F,"<","/mnt/perlpack/lib/5.35.4/x86_64-linux/Cwd.pm");print(<F>);print(456,"\n");'
-          PACKFSLIBARCHIVE=foo.zip ./perlpackstatic -e 'print(789,"\n");open(F,"<","/mnt/perlpackarchive/perlpack.c");print(<F>);print(789,"\n");'; echo $?
+          ./perlpackstatic -e 'print(456,"\n");open(F,"<","/mnt/perlpack/lib/5.35.4/x86_64-linux/Cwd.pm");$line=<F>;print($line);print(456,"\n");'
+          PACKFSLIBARCHIVE=foo.zip ./perlpackstatic -e 'print(789,"\n");open(F,"<","/mnt/perlpackarchive/perlpack.c");$line=<F>;print($line);print(789,"\n");'; echo $?
        
       - name: Artifacts
         uses: actions/upload-artifact@v4
