@@ -31,12 +31,11 @@ jobs:
       
       - name: Test Native Perl
         run: |
-          strace -f perl -e 'open(F,"<","Makefile");$line=<F>;print($line);'
           make perlpackstatic && zip -0 foo.zip perlpack.c
           ./perlpackstatic
           ./perlpackstatic -e 'use Cwd;print(Cwd::cwd(),"\n");'
-          strace -f ./perlpackstatic -e 'open(F,"<","/mnt/perlpack/lib/5.35.4/x86_64-linux/Cwd.pm");print(<F>);'
-          #PACKFSLIBARCHIVE=foo.zip ./perlpackstatic -e 'print(789,"\n");open(F,"<","/mnt/perlpackarchive/perlpack.c");$line=<F>;print($line);print(789,"\n");'; echo $?
+          ./perlpackstatic -e 'open(F,"<","/mnt/perlpack/lib/5.35.4/x86_64-linux/Cwd.pm");print(<F>);'
+          PACKFSLIBARCHIVE=foo.zip ./perlpackstatic -e 'open(F,"<","/mnt/perlpackarchive/perlpack.c");print(<F>);'
        
       - name: Artifacts
         uses: actions/upload-artifact@v4
