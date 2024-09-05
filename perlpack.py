@@ -36,6 +36,7 @@ print('\n'.join(objects), file = f)
 f = open(args.output_path, 'w')
 print(f'int packfsinfosnum = {len(files)};', file=f)# + {len(dirs)}
 print('\n'.join(f'extern char _binary_{safepath}_start[], _binary_{safepath}_end[];' for safepath in safepaths),  file=f)
+
 print('struct { const char* safepath; const char *path; const char* start; const char* end; int isdir; } packfsinfos[] = {', file=f)
 for p, relpath, safepath in zip(files, relpaths, safepaths):
     print('{ "' + repr(safepath)[1:-1] + '", "' + repr(os.path.join(args.prefix, relpath))[1:-1] + f'", _binary_{safepath}_start, _binary_{safepath}_end', ', 0 },', file=f)

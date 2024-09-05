@@ -64,7 +64,7 @@ struct packfs_context
     int (*orig_fileno)(FILE* stream);
     
     int packfsinfosnum;
-    const char** packfsinfos_starts;
+    const char** packfsinfos_starts, packfsinfos_ends, packfsinfos_safepaths, packfsinfos_abspaths;
     struct { const char* safe_path; const char *path; const char* start; const char* end; int isdir; }* packfsinfos;
     int packfs_filefd[packfs_filefd_max - packfs_filefd_min];
     FILE* packfs_fileptr[packfs_filefd_max - packfs_filefd_min];
@@ -107,9 +107,12 @@ struct packfs_context* packfs_ensure_context()
         strcpy(packfs_ctx.packfs_prefix_builtin, "/mnt/perlpack/");
         strcpy(packfs_ctx.packfs_prefix_archive, "/mnt/perlpackarchive/");
         // TODO: disable this assignment if prefix unset
-        packfs_ctx.packfsinfosnum = packfsinfosnum;
         packfs_ctx.packfsinfos = packfsinfos;
+        packfs_ctx.packfsinfosnum = packfsinfosnum;
         packfs_ctx.packfsinfos_starts = packfs_starts;
+        packfs_ctx.packfsinfos_ends = packfs_ends;
+        packfs_ctx.packfsinfos_safepaths = packfs_safepaths;
+        packfs_ctx.packfsinfos_abspaths = packfs_abspaths;
         packfs_ctx.files_num = 0;
         packfs_ctx.mmapsize = 0;
         packfs_ctx.fileptr = NULL;
