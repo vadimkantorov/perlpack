@@ -236,7 +236,7 @@ int packfs_open(struct packfs_context* packfs_ctx, const char* path, FILE** out)
             if(0 == strcmp(path, packfs_ctx->packfsinfos[i].path))
             {
                 filesize = (size_t)(packfs_ctx->packfsinfos[i].end - packfs_ctx->packfsinfos[i].start);
-                fileptr = fmemopen((void*)packfs_ctx->packfsinfos[i].start, filesize), "r");
+                fileptr = fmemopen((void*)packfs_ctx->packfsinfos[i].start, filesize, "r");
                 break;
             }
         }
@@ -252,7 +252,7 @@ int packfs_open(struct packfs_context* packfs_ctx, const char* path, FILE** out)
             if(0 == strcmp(packfs_ctx->filenames + filenames_start, path_without_prefix))
             {
                 filesize = packfs_ctx->sizes[i];
-                size_t offset = packfs_ctx->offsets[i] 
+                size_t offset = packfs_ctx->offsets[i];
                 if(packfs_ctx->mmapsize != 0)
                 {
                     fileptr = fmemopen((char*)packfs_ctx->fileptr + offset, size, "rb");
