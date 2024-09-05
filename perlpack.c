@@ -308,32 +308,34 @@ int packfs_close(struct packfs_context* packfs_ctx, int fd)
     return -2;
 }
 
-FILE* packfs_findptr(struct packfs_context* packfs_ctx, int fd)
+void* packfs_find(struct packfs_context* packfs_ctx, int fd, FILE* ptr)
 {
-    if(fd < packfs_filefd_min || fd >= packfs_filefd_max)
-        return NULL;
-    
-    for(int k = 0; k < packfs_filefd_max - packfs_filefd_min; k++)
+    if(ptr != NULL)
     {
-        if(packfs_ctx->packfs_filefd[k] == fd)
-            return packfs_ctx->packfs_fileptr[k];
+        for(int k = 0; k < packfs_filefd_max - packfs_filefd_min; k++)
+        {
+            if(packfs_ctx->packfs_fileptr[k] == ptr)
+                return &packfs_ctx->packfs_filefd[k];
+        }
+        return NULL;
+    }
+    else
+    {
+        if(fd < packfs_filefd_min || fd >= packfs_filefd_max)
+            return NULL;
+        
+        for(int k = 0; k < packfs_filefd_max - packfs_filefd_min; k++)
+        {
+            if(packfs_ctx->packfs_filefd[k] == fd)
+                return packfs_ctx->packfs_fileptr[k];
+        }
     }
     return NULL;
 }
 
-int packfs_findfd(struct packfs_context* packfs_ctx, FILE* ptr)
-{
-    for(int k = 0; k < packfs_filefd_max - packfs_filefd_min; k++)
-    {
-        if(packfs_ctx->packfs_fileptr[k] == ptr)
-            return packfs_ctx->packfs_filefd[k];
-    }
-    return -1;
-}
-
 ssize_t packfs_read(struct packfs_context* packfs_ctx, int fd, void* buf, size_t count)
 {
-    FILE* ptr = packfs_findptr(packfs_ctx, fd);
+    FILE* ptr = packfs_find(packfs_ctx, fd, NULL);
     if(!ptr)
         return -1;
     return (ssize_t)fread(buf, 1, count, ptr);
@@ -341,7 +343,7 @@ ssize_t packfs_read(struct packfs_context* packfs_ctx, int fd, void* buf, size_t
 
 int packfs_seek(struct packfs_context* packfs_ctx, int fd, long offset, int whence)
 {
-    FILE* ptr = packfs_findptr(packfs_ctx, fd);
+    FILE* ptr = packfs_find(packfs_ctx, fd, NULL);
     if(!ptr)
         return -1;
     return fseek(ptr, offset, whence);
@@ -443,7 +445,8 @@ int fileno(FILE *stream)
     
     if(res < 0)
     {        
-        res = packfs_findfd(packfs_ctx, stream);
+        int* ptr = packfs_find(packfs_ctx, -1, stream);
+        res = ptr == NULL ? -1 : (*ptr);
 #ifdef PACKFS_LOG
         fprintf(stderr, "packfs: Fileno(%p) == %d\n", (void*)stream, res);
 #endif
