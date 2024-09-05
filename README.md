@@ -1,14 +1,26 @@
-Primer on static build of Perl
+# Primer on static build of Perl:
+- build Perl into a single, self-contained, fully statically-linked executable
+- builds all builtin modules statically and then links them statically
+- showcases using Alpine Linux and musl libc for static linking with libc
+- embeds `*.pm` modules into the executable
+- showcases embedding a user Perl script
+- showcases embedding arbitrary files along
+- allows appending an uncompressed ZIP with more custom files and lets Perl access them transparently
+- file I/O for the above is enabled by a custom read-only virtual FS [overriding](https://github.com/Perl/perl5/issues/22571) I/O libc/stdio function calls; ZIP is supported via linking with https://github.com/libarchive/libarchive
 
+# Limitations
+- not all I/O function calls are reimplemented
+- it's only a proof-of-concept, very little tested
+- compressed ZIP files are not supported: waiting on https://github.com/libarchive/libarchive/issues/2306
 
-# References
-- https://perldoc.perl.org/perlembed
+# References and alternatives
 - https://metacpan.org/dist/App-Staticperl/view/staticperl.pod
 - https://metacpan.org/pod/PAR::Packer
 - http://staticperl.schmorp.de/smallperl.html
 - http://staticperl.schmorp.de/smallperl.bundle
 - http://staticperl.schmorp.de/bigperl.bundle
 - https://metacpan.org/pod/PerlIO
+- https://perldoc.perl.org/perlembed
 - https://perldoc.perl.org/open
 - https://perl.mines-albi.fr/perl5.8.5/5.8.5/sun4-solaris/Encode/PerlIO.html
 - https://perldoc.perl.org/Encode::PerlIO
