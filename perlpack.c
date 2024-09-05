@@ -235,7 +235,7 @@ int packfs_open(struct packfs_context* packfs_ctx, const char* path, FILE** out)
         {
             if(0 == strcmp(path, packfs_ctx->packfsinfos[i].path))
             {
-                filesize = (size_t)(packfs_ctx->packfsinfos[i].end - packfs_ctx->packfsinfos[i].start;
+                filesize = (size_t)(packfs_ctx->packfsinfos[i].end - packfs_ctx->packfsinfos[i].start);
                 fileptr = fmemopen((void*)packfs_ctx->packfsinfos[i].start, filesize), "r");
                 break;
             }
@@ -251,7 +251,7 @@ int packfs_open(struct packfs_context* packfs_ctx, const char* path, FILE** out)
         {
             if(0 == strcmp(packfs_ctx->filenames + filenames_start, path_without_prefix))
             {
-                file_size = packfs_ctx->sizes[i];
+                filesize = packfs_ctx->sizes[i];
                 size_t offset = packfs_ctx->offsets[i] 
                 if(packfs_ctx->mmapsize != 0)
                 {
@@ -259,10 +259,10 @@ int packfs_open(struct packfs_context* packfs_ctx, const char* path, FILE** out)
                 }
                 else
                 {
-                    fileptr = fmemopen(NULL, size, "rb+");
+                    fileptr = fmemopen(NULL, filesize, "rb+");
                     fseek((FILE*)packfs_ctx->fileptr, offset, SEEK_SET);
                     char buf[8192];
-                    for(size_t size = file_size, len = 0; size > 0; size -= len)
+                    for(size_t size = filesize, len = 0; size > 0; size -= len)
                     {
                         len = fread(buf, 1, sizeof(buf) <= size ? sizeof(buf) : size, (FILE*)packfs_ctx->fileptr);
                         fwrite(buf, 1, len, fileptr);
