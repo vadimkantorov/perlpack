@@ -71,6 +71,7 @@ struct packfs_context
     struct { const char* safe_path; const char *path; const char* start; const char* end; int isdir; }* packfsinfos;
     int packfs_filefd[packfs_filefd_max - packfs_filefd_min];
     FILE* packfs_fileptr[packfs_filefd_max - packfs_filefd_min];
+    size_t packfs_filesize[packfs_filefd_max - packfs_filefd_min];
     
     void* fileptr; size_t mmapsize;
     char filenames[packfs_index_filenames_num * packfs_index_filenames_len];
@@ -226,6 +227,7 @@ int packfs_open(struct packfs_context* packfs_ctx, const char* path, FILE** out)
     path = packfs_sanitize_path(path);
 
     FILE* fileptr = NULL;
+    size_t filesize = 0;
     
     if(packfs_ctx->packfsinfosnum > 0 && strncmp(packfs_ctx->packfs_prefix_builtin, path, strlen(packfs_ctx->packfs_prefix_builtin)) == 0)
     {
@@ -233,7 +235,8 @@ int packfs_open(struct packfs_context* packfs_ctx, const char* path, FILE** out)
         {
             if(0 == strcmp(path, packfs_ctx->packfsinfos[i].path))
             {
-                fileptr = fmemopen((void*)packfs_ctx->packfsinfos[i].start, (size_t)(packfs_ctx->packfsinfos[i].end - packfs_ctx->packfsinfos[i].start), "r");
+                filesize = (size_t)(packfs_ctx->packfsinfos[i].end - packfs_ctx->packfsinfos[i].start;
+                fileptr = fmemopen((void*)packfs_ctx->packfsinfos[i].start, filesize), "r");
                 break;
             }
         }
@@ -248,7 +251,8 @@ int packfs_open(struct packfs_context* packfs_ctx, const char* path, FILE** out)
         {
             if(0 == strcmp(packfs_ctx->filenames + filenames_start, path_without_prefix))
             {
-                size_t offset = packfs_ctx->offsets[i], size = packfs_ctx->sizes[i];
+                file_size = packfs_ctx->sizes[i];
+                size_t offset = packfs_ctx->offsets[i] 
                 if(packfs_ctx->mmapsize != 0)
                 {
                     fileptr = fmemopen((char*)packfs_ctx->fileptr + offset, size, "rb");
@@ -258,11 +262,10 @@ int packfs_open(struct packfs_context* packfs_ctx, const char* path, FILE** out)
                     fileptr = fmemopen(NULL, size, "rb+");
                     fseek((FILE*)packfs_ctx->fileptr, offset, SEEK_SET);
                     char buf[8192];
-                    while(size > 0)
+                    for(size_t size = file_size, len = 0; size > 0; size -= len)
                     {
-                        size_t len = fread(buf, 1, sizeof(buf) <= size ? sizeof(buf) : size, (FILE*)packfs_ctx->fileptr);
+                        len = fread(buf, 1, sizeof(buf) <= size ? sizeof(buf) : size, (FILE*)packfs_ctx->fileptr);
                         fwrite(buf, 1, len, fileptr);
-                        size -= len;
                     }
                     fseek(fileptr, 0, SEEK_SET);
                 }
@@ -282,6 +285,7 @@ int packfs_open(struct packfs_context* packfs_ctx, const char* path, FILE** out)
         {
             packfs_ctx->packfs_filefd[k] = packfs_filefd_min + k;
             packfs_ctx->packfs_fileptr[k] = fileptr;
+            packfs_ctx->packfs_filesize[k] = filesize;
             return packfs_ctx->packfs_filefd[k];
         }
     }
@@ -364,11 +368,11 @@ int packfs_access(struct packfs_context* packfs_ctx, const char* path)
     return -2;
 }
 
-int packfs_stat(struct packfs_context* packfs_ctx, const char* path, struct stat *restrict statbuf)
+int packfs_stat(struct packfs_context* packfs_ctx, const char* path, int fd, struct stat *restrict statbuf)
 {
     path = packfs_sanitize_path(path);
     
-    if(strncmp(packfs_ctx->packfs_prefix_builtin, path, strlen(packfs_ctx->packfs_prefix_builtin)) == 0)
+    if(path != NULL && strncmp(packfs_ctx->packfs_prefix_builtin, path, strlen(packfs_ctx->packfs_prefix_builtin)) == 0)
     {
         for(int i = 0; i < packfs_ctx->packfsinfosnum; i++)
         {
@@ -391,6 +395,21 @@ int packfs_stat(struct packfs_context* packfs_ctx, const char* path, struct stat
         return -1;
     }
     
+    if(fd >= 0 && packfs_filefd_min <= fd && fd < packfs_filefd_max)
+    {
+        for(int k = 0; k < packfs_filefd_max - packfs_filefd_min; k++)
+        {
+            if(packfs_ctx->packfs_filefd[k] == fd)
+            {
+                *statbuf = (struct stat){0};
+                statbuf->st_size = packfs_ctx->packfs_filesize[k];
+                statbuf->st_mode = S_IFREG;
+                return 0;
+            }
+        }
+        return -1;
+    }
+
     return -2;
 }
 
@@ -527,7 +546,7 @@ int access(const char *path, int flags)
     if(res >= -1)
     {
 #ifdef PACKFS_LOG
-        fprintf(stderr, "packfs: Access(\"%s\", %d) == 0\n", path, flags);
+        fprintf(stderr, "packfs: Access(\"%s\", %d) == %d\n", path, flags, res);
 #endif
         return res;
     }
@@ -543,11 +562,11 @@ int stat(const char *restrict path, struct stat *restrict statbuf)
 {
     struct packfs_context* packfs_ctx = packfs_ensure_context();
     
-    int res = packfs_stat(packfs_ctx, path, statbuf);
+    int res = packfs_stat(packfs_ctx, path, -1, statbuf);
     if(res >= -1)
     {
 #ifdef PACKFS_LOG
-        fprintf(stderr, "packfs: Stat(\"%s\", %p) == -1\n", path, (void*)statbuf);
+        fprintf(stderr, "packfs: Stat(\"%s\", %p) == %d\n", path, (void*)statbuf, res);
 #endif
         return res;
     }
@@ -562,6 +581,15 @@ int stat(const char *restrict path, struct stat *restrict statbuf)
 int fstat(int fd, struct stat * statbuf)
 {
     struct packfs_context* packfs_ctx = packfs_ensure_context();
+    
+    int res = packfs_stat(packfs_ctx, NULL, fd, statbuf);
+    if(res >= -1)
+    {
+#ifdef PACKFS_LOG
+        fprintf(stderr, "packfs: Fstat(%d, %p) == %d\n", fd, (void*)statbuf, res);
+#endif
+        return res;
+    }
     
     int res = packfs_ctx->orig_fstat(fd, statbuf);
 #ifdef PACKFS_LOG
