@@ -58,7 +58,6 @@ struct packfs_context
     int (*orig_access)(const char *path, int flags);
     off_t (*orig_lseek)(int fd, off_t offset, int whence);
     int (*orig_stat)(const char *restrict path, struct stat *restrict statbuf);
-    int (*orig_lstat)(const char *path, struct stat* statbuf);
     int (*orig_fstat)(int fd, struct stat * statbuf);
     FILE* (*orig_fopen)(const char *path, const char *mode);
     int (*orig_fileno)(FILE* stream);
@@ -68,7 +67,7 @@ struct packfs_context
     const char** packfsinfos_ends;
     const char** packfsinfos_safepaths;
     const char** packfsinfos_abspaths;
-    struct { const char* safe_path; const char *path; const char* start; const char* end; int isdir; }* packfsinfos;
+    //struct { const char* safe_path; const char *path; const char* start; const char* end; int isdir; }* packfsinfos;
     int packfs_filefd[packfs_filefd_max - packfs_filefd_min];
     FILE* packfs_fileptr[packfs_filefd_max - packfs_filefd_min];
     size_t packfs_filesize[packfs_filefd_max - packfs_filefd_min];
@@ -91,7 +90,6 @@ struct packfs_context* packfs_ensure_context()
         extern int orig_access(const char *path, int flags); packfs_ctx.orig_access = orig_access;
         extern off_t orig_lseek(int fd, off_t offset, int whence); packfs_ctx.orig_lseek = orig_lseek;
         extern int orig_stat(const char *restrict path, struct stat *restrict statbuf); packfs_ctx.orig_stat = orig_stat;
-        extern int orig_lstat(const char *path, struct stat* statbuf); packfs_ctx.orig_lstat = orig_lstat;
         extern int orig_fstat(int fd, struct stat * statbuf); packfs_ctx.orig_fstat = orig_fstat;
         extern FILE* orig_fopen(const char *path, const char *mode); packfs_ctx.orig_fopen = orig_fopen;
         extern int orig_fileno(FILE* stream); packfs_ctx.orig_fileno = orig_fileno;
@@ -103,15 +101,14 @@ struct packfs_context* packfs_ensure_context()
         packfs_ctx.orig_access = dlsym(RTLD_NEXT, "access");
         packfs_ctx.orig_lseek  = dlsym(RTLD_NEXT, "lseek");
         packfs_ctx.orig_stat   = dlsym(RTLD_NEXT, "stat");
-        packfs_ctx.orig_lstat   = dlsym(RTLD_NEXT,"lstat");
-        packfs_ctx.orig_fstat   = dlsym(RTLD_NEXT,"fstat");
+        packfs_ctx.orig_fstat  = dlsym(RTLD_NEXT, "fstat");
         packfs_ctx.orig_fopen  = dlsym(RTLD_NEXT, "fopen");
         packfs_ctx.orig_fileno = dlsym(RTLD_NEXT, "fileno");
 #endif
         strcpy(packfs_ctx.packfs_prefix_builtin, "/mnt/perlpack/");
         strcpy(packfs_ctx.packfs_prefix_archive, "/mnt/perlpackarchive/");
         // TODO: disable this assignment if prefix unset
-        packfs_ctx.packfsinfos = packfsinfos;
+        //packfs_ctx.packfsinfos = packfsinfos;
         packfs_ctx.packfsinfosnum = packfsinfosnum;
         packfs_ctx.packfsinfos_starts = packfs_starts;
         packfs_ctx.packfsinfos_ends = packfs_ends;
@@ -233,10 +230,10 @@ int packfs_open(struct packfs_context* packfs_ctx, const char* path, FILE** out)
     {
         for(size_t i = 0; i < packfs_ctx->packfsinfosnum; i++)
         {
-            if(0 == strcmp(path, packfs_ctx->packfsinfos[i].path))
+            if(0 == strcmp(path, packfs_ctx->packfsinfos_abspaths[i]))
             {
-                filesize = (size_t)(packfs_ctx->packfsinfos[i].end - packfs_ctx->packfsinfos[i].start);
-                fileptr = fmemopen((void*)packfs_ctx->packfsinfos[i].start, filesize, "r");
+                filesize = (size_t)(packfs_ctx->packfsinfos_ends[i] - packfs_ctx->packfsinfos_starts[i]);
+                fileptr = fmemopen((void*)packfs_ctx->packfsinfos_starts[i], filesize, "r");
                 break;
             }
         }
@@ -358,7 +355,7 @@ int packfs_access(struct packfs_context* packfs_ctx, const char* path)
     {
         for(int i = 0; i < packfs_ctx->packfsinfosnum; i++)
         {
-            if(0 == strcmp(path, packfs_ctx->packfsinfos[i].path))
+            if(0 == strcmp(path, packfs_ctx->packfsinfos_abspaths[i]))
             {
                 return 0;
             }
@@ -376,17 +373,17 @@ int packfs_stat(struct packfs_context* packfs_ctx, const char* path, int fd, str
     {
         for(int i = 0; i < packfs_ctx->packfsinfosnum; i++)
         {
-            if(0 == strcmp(path, packfs_ctx->packfsinfos[i].path))
+            if(0 == strcmp(path, packfs_ctx->packfsinfos_abspaths[i]))
             {
                 *statbuf = (struct stat){0};
-                if(packfsinfos[i].isdir)
+                //if(packfsinfos[i].isdir)
+                //{
+                //    statbuf->st_size = 0;
+                //    statbuf->st_mode = S_IFDIR;
+                //}
+                //else
                 {
-                    statbuf->st_size = 0;
-                    statbuf->st_mode = S_IFDIR;
-                }
-                else
-                {
-                    statbuf->st_size = (off_t)(packfsinfos[i].end - packfsinfos[i].start);
+                    statbuf->st_size = (off_t)(packfs_ctx->packfsinfos_ends[i] - packfs_ctx->packfsinfos_starts[i]);
                     statbuf->st_mode = S_IFREG;
                 }
                 return 0;
@@ -594,17 +591,6 @@ int fstat(int fd, struct stat * statbuf)
     res = packfs_ctx->orig_fstat(fd, statbuf);
 #ifdef PACKFS_LOG
     fprintf(stderr, "packfs: fstat(%d, %p) == %d\n", fd, (void*)statbuf, res);
-#endif
-    return res;
-}
-
-int lstat(const char *path, struct stat* statbuf)
-{
-    struct packfs_context* packfs_ctx = packfs_ensure_context();
-    
-    int res = packfs_ctx->orig_lstat(path, statbuf);
-#ifdef PACKFS_LOG
-    fprintf(stderr, "packfs: lstat(\"%s\", %p) == %d\n", path, (void*)statbuf, res);
 #endif
     return res;
 }
