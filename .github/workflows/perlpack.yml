@@ -15,9 +15,6 @@ jobs:
 
       - uses: actions/checkout@v4
       
-      - name: Build libarchive
-        run: git clone --single-branch --depth 1 https://github.com/libarchive/libarchive && make libarchive/.libs/libarchive.a
-
       - name: Build libc_perlpack.a
         run: make libc_perlpack.a
 
@@ -26,7 +23,8 @@ jobs:
       
       - name: Test Native Perl
         run: |
-          make perlpackstatic && zip -0 foo.zip perlpack.c
+          git clone --single-branch --depth 1 https://github.com/libarchive/libarchive && make libarchive/.libs/libarchive.a && zip -0 foo.zip perlpack.c
+          make perlpackstatic
           ./perlpackstatic
           ./perlpackstatic -e 'use Cwd;print(Cwd::cwd(),"\n");'
           ./perlpackstatic -e 'open(F,"<","/mnt/perlpack/lib/5.35.4/x86_64-linux/Cwd.pm");print(<F>);'
@@ -36,7 +34,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: |
-            perlpack
             pelrpackstatic
             perlpack.h
             libc_perlpack.a
+            perlpack
