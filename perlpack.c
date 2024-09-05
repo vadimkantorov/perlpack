@@ -64,7 +64,10 @@ struct packfs_context
     int (*orig_fileno)(FILE* stream);
     
     int packfsinfosnum;
-    const char** packfsinfos_starts, packfsinfos_ends, packfsinfos_safepaths, packfsinfos_abspaths;
+    const char** packfsinfos_starts;
+    const char** packfsinfos_ends;
+    const char** packfsinfos_safepaths;
+    const char** packfsinfos_abspaths;
     struct { const char* safe_path; const char *path; const char* start; const char* end; int isdir; }* packfsinfos;
     int packfs_filefd[packfs_filefd_max - packfs_filefd_min];
     FILE* packfs_fileptr[packfs_filefd_max - packfs_filefd_min];

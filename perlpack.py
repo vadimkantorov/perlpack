@@ -6,6 +6,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--input-path', '-i')
 parser.add_argument('--output-path', '-o')
 parser.add_argument('--prefix', default = '')
+parser.add_argument('--ld', default = 'ld')
 args = parser.parse_args()
 
 translate = {ord('/') : '_', ord('.') : '_', ord('-') : '_'}
@@ -26,7 +27,7 @@ for (dirpath, dirnames, filenames) in os.walk(args.input_path):
         safepaths.append(safepath)
         relpaths.append(relpath)
         objects.append(os.path.join(args.output_path + '.o', safepath + '.o'))
-        subprocess.check_call(['ld', '-r', '-b', 'binary', '-o', objects[-1], files[-1]])
+        subprocess.check_call([args.ld, '-r', '-b', 'binary', '-o', objects[-1], files[-1]])
 
 # problem: can produce the same symbol name because of this mapping
 
