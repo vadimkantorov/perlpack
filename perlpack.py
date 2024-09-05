@@ -50,6 +50,6 @@ print('};', file=f)
 fmtstrlist = lambda arr: repr(arr).replace("'", '"').replace('[', '{').replace(']', '}').replace(' ', '\n')
 
 print('const char* packfs_safepaths[] =', fmtstrlist(safepaths), ';', file=f)
-print('const char* packfs_abspaths[] =' , fmtstrlist([os.path.join(args.prefix, relpath) for relpath in safepaths]), ';', file=f)
+print('const char* packfs_abspaths[] =' , fmtstrlist([os.path.join(args.prefix, relpath) for relpath in relpaths]), ';', file=f)
 print('const char* packfs_starts[] = {', ',\n'.join(f'_binary_{safepath}_start' for safepath in safepaths), '} ;', file=f)
 print('const char* packfs_ends[] = {', ',\n'.join(f'_binary_{safepath}_end' for safepath in safepaths), '} ;', file=f)
