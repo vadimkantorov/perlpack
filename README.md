@@ -1,4 +1,4 @@
-# Primer on static build of Perl:
+# Primer on static build of Perl
 - build Perl into a single, self-contained, fully statically-linked executable
 - builds all builtin modules statically and then links them statically
 - showcases using Alpine Linux and musl libc for static linking with libc
@@ -13,12 +13,14 @@
 - it's only a proof-of-concept, very little tested
 - compressed ZIP files are not supported: waiting on https://github.com/libarchive/libarchive/issues/2306
 
-# References and alternatives
+# Prior complete, but also more complex approaches
 - https://metacpan.org/dist/App-Staticperl/view/staticperl.pod
-- https://metacpan.org/pod/PAR::Packer
 - http://staticperl.schmorp.de/smallperl.html
 - http://staticperl.schmorp.de/smallperl.bundle
 - http://staticperl.schmorp.de/bigperl.bundle
+- https://metacpan.org/pod/PAR::Packer
+
+# References and alternatives
 - https://metacpan.org/pod/PerlIO
 - https://perldoc.perl.org/perlembed
 - https://perldoc.perl.org/open
