@@ -17,7 +17,7 @@ os.makedirs(args.output_path + '.o', exist_ok = True)
 
 objects, files, dirs_relpaths, safepaths, relpaths = [], [], [], [], []
 for (dirpath, dirnames, filenames) in os.walk(args.input_path):
-    dirs.extend(os.path.join(dirpath, dirname).split(os.path.sep, maxsplit = 1)[-1] for dirname in dirnames)
+    dirs_relpaths.extend(os.path.join(dirpath, dirname).split(os.path.sep, maxsplit = 1)[-1] for dirname in dirnames)
     for basename in filenames:
         p = os.path.join(dirpath, basename)
         safepath = p.translate(translate)
