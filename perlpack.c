@@ -255,7 +255,7 @@ int packfs_open(struct packfs_context* packfs_ctx, const char* path, FILE** out)
                 size_t offset = packfs_ctx->offsets[i];
                 if(packfs_ctx->mmapsize != 0)
                 {
-                    fileptr = fmemopen((char*)packfs_ctx->fileptr + offset, size, "rb");
+                    fileptr = fmemopen((char*)packfs_ctx->fileptr + offset, filesize, "rb");
                 }
                 else
                 {
@@ -591,7 +591,7 @@ int fstat(int fd, struct stat * statbuf)
         return res;
     }
     
-    int res = packfs_ctx->orig_fstat(fd, statbuf);
+    res = packfs_ctx->orig_fstat(fd, statbuf);
 #ifdef PACKFS_LOG
     fprintf(stderr, "packfs: fstat(%d, %p) == %d\n", fd, (void*)statbuf, res);
 #endif
