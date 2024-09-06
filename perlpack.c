@@ -19,7 +19,7 @@
 #include <sys/mman.h>
 #include <sys/types.h>
 
-#ifdef PACKFSLIBARCHIVE
+#ifdef PACKFS_ARCHIVE
 #include <archive.h>
 #include <archive_entry.h>
 // https://github.com/libarchive/libarchive/issues/2295
@@ -129,11 +129,11 @@ struct packfs_context* packfs_ensure_context()
         
         packfs_ctx.initialized = 1;
         
-#ifdef PACKFSLIBARCHIVE
+#ifdef PACKFS_ARCHIVE
         struct archive *a = archive_read_new();
         archive_read_support_format_zip(a);
         struct archive_entry *entry;
-        const char* packfs_archive_filename = getenv("PACKFSLIBARCHIVE");
+        const char* packfs_archive_filename = getenv("PACKFS_ARCHIVE");
         do
         {
             if(packfs_archive_filename == NULL || strlen(packfs_archive_filename) == 0 || strncmp(packfs_ctx.packfs_archive_prefix, packfs_archive_filename, strlen(packfs_ctx.packfs_archive_prefix)) == 0)
@@ -249,7 +249,7 @@ int packfs_open(struct packfs_context* packfs_ctx, const char* path, FILE** out)
         }
     }
 
-#if PACKFSLIBARCHIVE
+#if PACKFS_ARCHIVE
     else if(packfs_ctx->packfs_archive_files_num > 0 && strncmp(packfs_ctx->packfs_archive_prefix, path, strlen(packfs_ctx->packfs_archive_prefix)) == 0)
     {
         const char* path_without_prefix = path + strlen(packfs_ctx->packfs_archive_prefix);
