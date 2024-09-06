@@ -253,7 +253,7 @@ int packfs_open(struct packfs_context* packfs_ctx, const char* path, FILE** out)
     {
         const char* path_without_prefix = path + strlen(packfs_ctx->packfs_archive_prefix);
         size_t filenames_start = 0;
-        for(size_t i = 0; i < packfs_ctx->files_num; i++)
+        for(size_t i = 0; i < packfs_ctx->packfs_archive_files_num; i++)
         {
             if(0 == strcmp(packfs_ctx->packfs_archive_filenames + filenames_start, path_without_prefix))
             {
