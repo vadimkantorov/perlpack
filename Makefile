@@ -35,12 +35,12 @@ perlpackstatic:
 	-rm -rf packfs/man packfs/lib/*/pod/
 	-find packfs -name '*.pod' -o -name '*.ld' -o -name '*.a' -o -name '*.h' -delete
 	perl perlpack.pl -i packfs -o perlpack.h --prefix=/mnt/perlpack/ --ld="$(LD)"
-	ln perlpack.pl myscript.pl && $(LD) -r -b binary -o myscript.o myscript.pl
+	cp perlpack.pl myscript.pl && $(LD) -r -b binary -o myscript.o myscript.pl
 	$(CC) -o $@ perlpack.c myscript.o -DPACKFS_STATIC  -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -I$(PWD)/build -I/usr/local/include   -Wl,-E -fstack-protector-strong -fwrapv -fno-strict-aliasing -L/usr/local/lib build/libperl.a libc_perlpack.a  -lpthread -ldl -lm -lutil --static -static -static-libstdc++ -static-libgcc  $(MODULES_def) $(shell printf "build/lib/auto/%s " $(MODULES_a)) @perlpack.h.txt
 
 perlpackstaticzip:
 	-rm -rf packfs/man packfs/lib/*/pod/
 	-find packfs -name '*.pod' -o -name '*.ld' -o -name '*.a' -o -name '*.h' -delete
 	perl perlpack.pl -i packfs -o perlpack.h --prefix=/mnt/perlpack/ --ld="$(LD)"
-	ln perlpack.pl myscript.pl && $(LD) -r -b binary -o myscript.o perlpack.pl
+	cp perlpack.pl myscript.pl && $(LD) -r -b binary -o myscript.o perlpack.pl
 	$(CC) -o $@ perlpack.c myscript.o -DPACKFS_STATIC -DPACKFSLIBARCHIVE -larchive -Llibarchive/.libs -Ilibarchive -Ilibarchive/libarchive   -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -I$(PWD)/build -I/usr/local/include   -Wl,-E -fstack-protector-strong -fwrapv -fno-strict-aliasing -L/usr/local/lib build/libperl.a libc_perlpack.a  -lpthread -ldl -lm -lutil --static -static -static-libstdc++ -static-libgcc  $(MODULES_def) $(shell printf "build/lib/auto/%s " $(MODULES_a)) @perlpack.h.txt
