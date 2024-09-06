@@ -1,4 +1,4 @@
-int packfsinfosnum;
+int packfsfilesnum;
 const char* packfs_safepaths[] = {};
 const char* packfs_abspaths[] = {};
 const char* packfs_starts[] = {};
