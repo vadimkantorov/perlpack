@@ -30,14 +30,6 @@ static ssize_t new_file_read(struct archive *a, void *client_data, const void **
 }
 #endif
 
-#include <EXTERN.h>
-#include <perl.h>
-#include <XSUB.h>
-
-static char script[1 << 20] = "print('Hello world! Need more arguments!\n');";
-extern char _binary_myscript_pl_start[];
-extern char _binary_myscript_pl_end[];
-
 // https://github.com/google/fuse-archive/blob/main/src/main.cc
 // https://github.com/yandex-cloud/geesefs/blob/master/internal/goofys_fuse.go
 // https://github.com/winfsp/cgofuse/blob/master/examples/memfs/memfs.go
@@ -610,6 +602,10 @@ int fstat(int fd, struct stat * statbuf)
     return res;
 }
 
+#include <EXTERN.h>
+#include <perl.h>
+#include <XSUB.h>
+
 // #include <xsinit.c>
 void xs_init(pTHX) //EXTERN_C 
 {
@@ -820,6 +816,10 @@ void xs_init(pTHX) //EXTERN_C
 
 int main(int argc, char *argv[], char* envp[])
 {
+    static char script[1 << 20] = "print('Hello world! Need more arguments!\n');";
+    extern char _binary_myscript_pl_start[];
+    extern char _binary_myscript_pl_end[];
+
     if(argc > 1 && 0 == strcmp("myscript.pl", argv[1]))
     {
         size_t iSize = _binary_myscript_pl_end - _binary_myscript_pl_start;
