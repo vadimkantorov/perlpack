@@ -108,7 +108,7 @@ struct packfs_context* packfs_ensure_context()
         strcpy(packfs_ctx.packfs_prefix_builtin, "/mnt/perlpack/");
         strcpy(packfs_ctx.packfs_prefix_archive, "/mnt/perlpackarchive/");
         // TODO: disable this assignment if prefix unset
-        packfs_ctx.packfsinfosnum = packfsinfosnum;
+        packfs_ctx.packfsinfosnum = packfsfilesnum;
         packfs_ctx.packfsinfos_starts = packfs_starts;
         packfs_ctx.packfsinfos_ends = packfs_ends;
         packfs_ctx.packfsinfos_safepaths = packfs_safepaths;
