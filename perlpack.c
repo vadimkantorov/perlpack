@@ -1,9 +1,15 @@
-#define packfs_string_value_(x) #x
-#define packfs_string_value(x) packfs_string_value_(x)
-#ifdef PACKFS_PREFIX
-#define packfs_prefix packfs_string_value(PACKFS_PREFIX)
+#define PACKFS_STRING_VALUE_(x) #x
+#define PACKFS_STRING_VALUE(x) PACKFS_STRING_VALUE_(x)
+
+#ifdef PACKFS_BUILTIN_PREFIX
+#define packfs_builtin_prefix_expanded PACKFS_STRING_VALUE(PACKFS_BUILTIN_PREFIX)
 #else
-#define packfs_prefix "packfs/"
+#define packfs_builtin_prefix_expanded "/mnt/perlpack/"
+#endif
+#ifdef PACKFS_ARCHIVE_PREFIX
+#define packfs_archive_prefix_expanded PACKFS_STRING_VALUE(PACKFS_ARCHIVE_PREFIX)
+#else
+#define packfs_archive_prefix_expanded "/mnt/perlpackarchive/"
 #endif
 
 #define _GNU_SOURCE
