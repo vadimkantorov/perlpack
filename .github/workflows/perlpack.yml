@@ -21,20 +21,29 @@ jobs:
       - name: Build Perl
         run: make build/libperl.a
       
-      - name: Test Native Perl
+      - name: Build and test perlpackstatic
         run: |
-          git clone --single-branch --depth 1 https://github.com/libarchive/libarchive && make libarchive/.libs/libarchive.a && zip -0 foo.zip perlpack.c
           make perlpackstatic
           ./perlpackstatic
           ./perlpackstatic -e 'use Cwd;print(Cwd::cwd(),"\n");'
           ./perlpackstatic -e 'open(F,"<","/mnt/perlpack/lib/5.35.4/x86_64-linux/Cwd.pm");print(<F>);'
-          PACKFSLIBARCHIVE=foo.zip ./perlpackstatic -e 'open(F,"<","/mnt/perlpackarchive/perlpack.c");print(<F>);'
+       
+      - name: Build and test perlpackstaticzip
+        run: |
+          git clone --single-branch --depth 1 https://github.com/libarchive/libarchive
+          make libarchive/.libs/libarchive.a
+          zip -0 perlpack.zip perlpack.c
+          make perlpackstaticzip
+          ./perlpackstaticzip -e 'use Cwd;print(Cwd::cwd(),"\n");'
+          ./perlpackstaticzip -e 'open(F,"<","/mnt/perlpack/lib/5.35.4/x86_64-linux/Cwd.pm");print(<F>);'
+          PACKFSLIBARCHIVE=perlpack.zip ./perlpackstaticzip -e 'open(F,"<","/mnt/perlpackarchive/perlpack.c");print(<F>);'
        
       - name: Artifacts
         uses: actions/upload-artifact@v4
         with:
           path: |
             pelrpackstatic
+            pelrpackstaticzip
             perlpack.h
             libc_perlpack.a
             perlpack
