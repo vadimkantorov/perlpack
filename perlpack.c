@@ -14,6 +14,7 @@
 #ifdef PACKFSLIBARCHIVE
 #include <archive.h>
 #include <archive_entry.h>
+// https://github.com/libarchive/libarchive/issues/2295
 // define required for #include <archive_read_private.h>
 #define __LIBARCHIVE_BUILD
 #include <archive_read_private.h>
@@ -37,8 +38,19 @@ static char script[1 << 20] = "print('Hello world! Need more arguments!\n');";
 extern char _binary_myscript_pl_start[];
 extern char _binary_myscript_pl_end[];
 
-#include "perlpack.h"
+// https://github.com/google/fuse-archive/blob/main/src/main.cc
+// https://github.com/yandex-cloud/geesefs/blob/master/internal/goofys_fuse.go
+// https://github.com/winfsp/cgofuse/blob/master/examples/memfs/memfs.go
+// .getattr = my_getattr,
+// .readlink = my_readlink,
+// .open = my_open,
+// .read = my_read,
+// .release = my_release,
+// .readdir = my_readdir,
+// .init = my_init,
+// .destroy = my_destroy,
 
+#include "perlpack.h"
 enum {
     packfs_filefd_min = 1000000000, 
     packfs_filefd_max = 1000001000, 
