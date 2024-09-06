@@ -14,9 +14,11 @@ build/libperl.a:
 	mkdir -p build
 	curl -L $(URLPERL) | tar -xzf - --strip-components=1 --directory=build
 	cd build && sh ./Configure -sde -Dman1dir=none -Dman3dir=none -Dprefix=/mnt/perlpack -Dinstallprefix=../packfs -Aldflags=-lm -Accflags=-lm -Dusedevel -Dlibs="-lpthread -ldl -lm -lutil -lc" -Dstatic_ext="$(MODULES_ext)" && cd ..
-	$(MAKE) -C build miniperl generate_uudmap
-	$(MAKE) -C build perl
+	$(MAKE) -C build
 	$(MAKE) -C build install
+	#$(MAKE) -C build miniperl generate_uudmap
+	#$(MAKE) -C build perl
+	#$(MAKE) -C build install
 
 libc_perlpack.a:
 	cp $(shell $(CC) -print-file-name=libc.a) $@
