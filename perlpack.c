@@ -71,7 +71,7 @@ struct packfs_context
     FILE* packfs_fileptr[packfs_filefd_max - packfs_filefd_min];
     size_t packfs_filesize[packfs_filefd_max - packfs_filefd_min];
     
-    char packfs_builtin_prefix[packfs_filepath_max_len]
+    char packfs_builtin_prefix[packfs_filepath_max_len];
     size_t packfs_builtin_files_num;
     const char** packfs_builtin_starts;
     const char** packfs_builtin_ends;
