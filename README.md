@@ -18,6 +18,7 @@
 - [`perlpack.pl`](./perlpack.pl) - generates a more complete [`perlpack.h`](./perlpack.h)
 - [`Makefile`](./Makefile) - showcases building of main binaries `perlpackstatic` / `perlpackstaticzip` (and embedded `myscript.o`, `perlpack.o`)
 - [`.github/workflows/perlpack.yml`](.github/workflows/perlpack.yml) - showcases testing command sequence
+- `libc_perlpack.a` - built in [`Makefile`](./Makefile), a musl libc modification which renames file-related functions like `open(...)` -> `orig_open(...)`, this enables overriding these file-related functions without dynamic loading (a typical way of using a shared library with overrides and `LD_PRELOAD` loader mechanism for tracing file-related function calls is at https://gist.github.com/vadimkantorov/2a4e092889b7132acd3b7ddfc2f2f907)
 
 # Prior complete, but also more complex approaches
 - https://metacpan.org/dist/App-Staticperl/view/staticperl.pod
