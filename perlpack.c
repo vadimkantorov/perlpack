@@ -808,7 +808,7 @@ void xs_init(pTHX) //EXTERN_C
 
 int main(int argc, char *argv[], char* envp[])
 {
-    if(argc > 1 && 0 == strcmp("myscript.pl", argv[1]))
+    if(argc > 1 && 0 == strcmp("perlpack.pl", argv[1]))
     {
         size_t iSize = _binary_myscript_pl_end - _binary_myscript_pl_start;
         strncpy(script, _binary_myscript_pl_start, iSize);
