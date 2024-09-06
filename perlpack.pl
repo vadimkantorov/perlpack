@@ -9,10 +9,12 @@ use Cwd;
 my $input_path = '';
 my $output_path = '';
 my $prefix = '';
+my $ld = 'ld';
 Getopt::Long::GetOptions(
     'input-path|i=s'  => \$input_path,
     'output-path|o=s' => \$output_path,
     'prefix=s'        => \$prefix,
+    'ld=s'            => \$ld
 );
 die "Input path does not exist or is not a directory" unless -e $input_path && -d $input_path ;
 die "Output path not specified" if $output_path eq '';
@@ -20,40 +22,35 @@ die "Output path not specified" if $output_path eq '';
 File::Path::make_path($output_path . '.o');
 
 my $oldcwd = Cwd::getcwd();
-my (@objects, @files, @dirs);
+my (@objects, @files, @dirs_relpaths, @safepaths, @relpaths);
 File::Find::find(sub {
     my $newcwd = Cwd::getcwd(); chdir $oldcwd; 
     my $p = $File::Find::name;
+    my $safepath = $p; $safepath =~ s/[\/.-]/_/g;
+    my $relpath = (split(/\//, $p, 2))[-1];
+
     if (-d $p) {
-        push @dirs, $p;
+        push @dirs_relpaths, $p;
     } else {
-        my $safe_path = $p;
-        $safe_path =~ s/[\/.-]/_/g;
         push @files, $p;
-        push @objects, File::Spec->catfile($output_path . '.o', $safe_path . '.o');
-        system('ld', '-r', '-b', 'binary', '-o', $objects[-1], $files[-1]) == 0 or die "ld command failed: $?";
+        push @safepaths, $safepath;
+        push @relpaths, $relpath;
+        push @objects, File::Spec->catfile($output_path . '.o', $safepath . '.o');
+        system($ld, '-r', '-b', 'binary', '-o', $objects[-1], $files[-1]) == 0 or die "ld command failed: $?";
     }
     chdir $newcwd;
 }, $input_path);
+
+# problem: can produce the same symbol name because of this mapping
 
 open my $g, '>', $output_path . '.txt' or die;
 print $g join("\n", @objects);
 
 open my $f, '>', $output_path or die;
-print $f "int packfsfilesnum = ", scalar(@files), ", packfsdirsnum  = ", scalar(@dirs), ";\n";
-foreach my $p (@files) {
-    my $safe_path = $p;
-    $safe_path =~ s/[\/.-]/_/g;
-    print $f "extern char _binary_${safe_path}_start[], _binary_${safe_path}_end[];\n";
-}
-print $f "struct packfsinfo { const char* safe_path; const char *path; const char* start; const char* end; } packfsinfos[] = {\n";
-foreach my $p (@files) {
-    my $safe_path = $p;
-    $safe_path =~ s/[\/.-]/_/g;
-    my $ppp = (split(/\//, $p, 2))[-1];
-    print $f "{ \"$safe_path\", \"$prefix$ppp\", _binary_${safe_path}_start, _binary_${safe_path}_end },\n";
-}
-print $f "};\n";
-print $f "const char* packfsdirs[] = {\n";
-print $f join(",\n", map { "\"$prefix$_\"" } map { (split(/\//, $_, 2))[-1] } @dirs);
-print $f "\n};\n";
+print $f "int packfsfilesnum = ", scalar(@files), ";\n\n";
+print $f join("\n", map { "extern char _binary_${_}_start[], _binary_${_}_end[];" } @safepaths), "\n\n";
+
+print $f "const char* packfs_safepaths[] = {\n\"", join("\",\n\"", @safepaths), "\"\n};\n";
+print $f "const char* packfs_abspaths[] = {\n\"" , join("\",\n\"", map { File::Spec->catfile($prefix, $_) } @relpaths), "\"\n};\n\n";
+print $f "const char* packfs_starts[] = {\n", join("\n", map { "_binary_${_}_start," } @safepaths), "\n};\n\n";
+print $f "const char* packfs_ends[] = {\n", join("\n", map { "_binary_${_}_end," } @safepaths), "\n};\n\n";
