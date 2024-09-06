@@ -47,10 +47,10 @@ open my $g, '>', $output_path . '.txt' or die;
 print $g join("\n", @objects);
 
 open my $f, '>', $output_path or die;
-print $f "int packfsfilesnum = ", scalar(@files), ";\n\n";
+print $f "size_t packfs_builtin_files_num = ", scalar(@files), ";\n\n";
 print $f join("\n", map { "extern char _binary_${_}_start[], _binary_${_}_end[];" } @safepaths), "\n\n";
 
-print $f "const char* packfs_safepaths[] = {\n\"", join("\",\n\"", @safepaths), "\"\n};\n";
-print $f "const char* packfs_abspaths[] = {\n\"" , join("\",\n\"", map { File::Spec->catfile($prefix, $_) } @relpaths), "\"\n};\n\n";
-print $f "const char* packfs_starts[] = {\n", join("\n", map { "_binary_${_}_start," } @safepaths), "\n};\n\n";
-print $f "const char* packfs_ends[] = {\n", join("\n", map { "_binary_${_}_end," } @safepaths), "\n};\n\n";
+print $f "const char* packfs_builtin_safepaths[] = {\n\"", join("\",\n\"", @safepaths), "\"\n};\n";
+print $f "const char* packfs_builtin_abspaths[] = {\n\"" , join("\",\n\"", map { File::Spec->catfile($prefix, $_) } @relpaths), "\"\n};\n\n";
+print $f "const char* packfs_builtin_starts[] = {\n", join("\n", map { "_binary_${_}_start," } @safepaths), "\n};\n\n";
+print $f "const char* packfs_builtin_ends[] = {\n", join("\n", map { "_binary_${_}_end," } @safepaths), "\n};\n\n";
