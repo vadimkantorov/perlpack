@@ -34,8 +34,8 @@ jobs:
           make libarchive/.libs/libarchive.a
           zip -0 perlpack.zip perlpack.c
           make perlpackstaticzip
+          ./perlpackstaticzip
           ./perlpackstaticzip -e 'use Cwd;print(Cwd::cwd(),"\n");'
-          ./perlpackstaticzip -e 'open(F,"<","/mnt/perlpack/lib/5.35.4/x86_64-linux/Cwd.pm");print(<F>);'
           PACKFSLIBARCHIVE=perlpack.zip ./perlpackstaticzip -e 'open(F,"<","/mnt/perlpackarchive/perlpack.c");print(<F>);'
        
       - name: Artifacts
