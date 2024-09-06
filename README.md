@@ -3,7 +3,7 @@
 - builds all builtin modules statically and then links them statically
 - showcases using Alpine Linux and musl libc for static linking with libc
 - embeds `*.pm` modules into the executable
-- showcases embedding a user Perl script
+- showcases embedding a user Perl script (for illustration is used `perlpack.pl`, see [`Makefile`](./Makefile))
 - showcases embedding arbitrary files along
 - allows appending an uncompressed ZIP with more custom files and lets Perl access them transparently
 - file I/O for the above is enabled by a custom read-only virtual FS [overriding](https://github.com/Perl/perl5/issues/22571) I/O libc/stdio function calls; ZIP is supported via linking with https://github.com/libarchive/libarchive
@@ -12,6 +12,12 @@
 - not all I/O function calls are reimplemented
 - it's only a proof-of-concept, very little tested
 - compressed ZIP files are not supported: waiting on https://github.com/libarchive/libarchive/issues/2306
+
+# Files of interest
+- [`perlpack.c`](./perlpack.c) - the main C program which embeds Perl, includes [`perlpack.h`](./perlpack.h) and override I/O callback to enable transparent access to the embedded files and to a ZIP file
+- [`perlpack.pl`](./perlpack.pl) - generates a more complete [`perlpack.h`](./perlpack.h)
+- [`Makefile`](./Makefile) - showcases building of main binaries `perlpackstatic` / `perlpackstaticzip` (and embedded `myscript.o`, `perlpack.o`)
+- [`.github/workflows/perlpack.yml`](.github/workflows/perlpack.yml) - showcases testing command sequence
 
 # Prior complete, but also more complex approaches
 - https://metacpan.org/dist/App-Staticperl/view/staticperl.pod
