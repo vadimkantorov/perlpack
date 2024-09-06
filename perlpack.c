@@ -71,18 +71,19 @@ struct packfs_context
     FILE* packfs_fileptr[packfs_filefd_max - packfs_filefd_min];
     size_t packfs_filesize[packfs_filefd_max - packfs_filefd_min];
     
-    char packfs_builtin_prefix[packfs_filepath_max_len];
     size_t packfs_builtin_files_num;
+    char packfs_builtin_prefix[packfs_filepath_max_len];
     const char** packfs_builtin_starts;
     const char** packfs_builtin_ends;
     const char** packfs_builtin_safepaths;
     const char** packfs_builtin_abspaths;
     
+    size_t packfs_archive_files_num;  
     char packfs_archive_prefix[packfs_filepath_max_len];
     void* packfs_archive_fileptr;
     size_t packfs_archive_mmapsize;
     char packfs_archive_filenames[packfs_archive_filenames_num * packfs_filepath_max_len];
-    size_t packfs_archive_files_num, packfs_archive_filenames_lens[packfs_archive_filenames_num], packfs_archive_offsets[packfs_archive_filenames_num], packfs_archive_sizes[packfs_archive_filenames_num];
+    size_t packfs_archive_filenames_lens[packfs_archive_filenames_num], packfs_archive_offsets[packfs_archive_filenames_num], packfs_archive_sizes[packfs_archive_filenames_num];
 };
 
 struct packfs_context* packfs_ensure_context()
