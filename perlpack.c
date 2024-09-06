@@ -1,3 +1,11 @@
+#define packfs_string_value_(x) #x
+#define packfs_string_value(x) packfs_string_value_(x)
+#ifdef PACKFS_PREFIX
+#define packfs_prefix packfs_string_value(PACKFS_PREFIX)
+#else
+#define packfs_prefix "packfs/"
+#endif
+
 #define _GNU_SOURCE
 #include <string.h>
 #include <stdio.h>
