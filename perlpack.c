@@ -463,7 +463,7 @@ FILE* fopen(const char *path, const char *mode)
         }
     }
 
-    int res = packfs_ctx->orig_fopen(path, mode);
+    FILE* res = packfs_ctx->orig_fopen(path, mode);
 #ifdef PACKFS_LOG
     fprintf(stderr, "packfs: fopen(\"%s\", \"%s\") == %p\n", path, mode, (void*)res);
 #endif
