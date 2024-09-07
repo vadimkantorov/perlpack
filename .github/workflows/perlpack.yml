@@ -33,7 +33,7 @@ jobs:
           git clone --single-branch --depth 1 https://github.com/libarchive/libarchive
           make libarchive/.libs/libarchive.a
           make perlpackstaticzip
-          zip -0 - perlpack.c >> ./perlpackstaticzip
+          zip -0 - perlpack.c >> perlpackstaticzip
           ./perlpackstaticzip
           ./perlpackstaticzip -e 'use Cwd;print(Cwd::cwd(),"\n");'
           ./perlpackstaticzip -e 'open(F,"<","/mnt/perlpackarchive/perlpack.c");print(<F>);'
@@ -42,8 +42,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: |
-            pelrpackstatic
-            pelrpackstaticzip
+            perlpackstatic
+            perlpackstaticzip
             perlpack.h
             libc_perlpack.a
             perlpack
