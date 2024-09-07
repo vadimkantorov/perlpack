@@ -52,6 +52,7 @@ static ssize_t new_file_read(struct archive *a, void *client_data, const void **
 // .readdir = my_readdir,
 
 #include "perlpack.h"
+const char* packfs_proc_self_exe;
 enum {
     packfs_filefd_min = 1000000000, 
     packfs_filefd_max = 1000001000, 
@@ -833,7 +834,9 @@ int main(int argc, char *argv[], char* envp[])
     extern char _binary_myscript_pl_start[];
     extern char _binary_myscript_pl_end[];
 
-    if(argc > 1 && 0 == strcmp("myscript.pl", argv[1]))
+    if(argc < 1)
+        return -1;
+    else if(argc > 1 && 0 == strcmp("myscript.pl", argv[1]))
     {
         size_t iSize = _binary_myscript_pl_end - _binary_myscript_pl_start;
         strncpy(script, _binary_myscript_pl_start, iSize);
@@ -844,18 +847,21 @@ int main(int argc, char *argv[], char* envp[])
         strcpy(script, argv[2]);
     }
     
+    packfs_proc_self_exe = argv[0];
     packfs_ensure_context();
 
     PERL_SYS_INIT3(&argc, &argv, &envp);
     PerlInterpreter* myperl = perl_alloc();
-    if(!myperl) return -1;
+    if(myperl == NULL)
+        return -1;
 
     perl_construct(myperl);
     PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
     char *myperl_argv[] = { "perlpack", "-e", script, "--", argv[2], NULL };
     int myperl_argc = sizeof(myperl_argv) / sizeof(myperl_argv[0]) - 1;
     int res = perl_parse(myperl, xs_init, myperl_argc, myperl_argv, envp);
-    if(res == 0) res = perl_run(myperl); // error if res != 0 (or stricter in case exit(0) was called from perl code): (res & 0xFF) != 0: 
+    if(res == 0)
+        res = perl_run(myperl); // error if res != 0 (or stricter in case exit(0) was called from perl code): (res & 0xFF) != 0: 
 
     PL_perl_destruct_level = 0;
     res = perl_destruct(myperl);
