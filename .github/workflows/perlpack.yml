@@ -33,8 +33,7 @@ jobs:
           git clone --single-branch --depth 1 https://github.com/libarchive/libarchive
           make libarchive/.libs/libarchive.a
           make perlpackstaticzip
-          zip -0 perlpack.zip perlpack.c
-          cat perlpackstaticzip perlpack.zip > perlpackstatic.zip
+          zip -0 perlpack.zip perlpack.c; cat perlpackstaticzip perlpack.zip > perlpackstatic.zip; chmod +x perlpackstatic.zip
           ./perlpackstatic.zip
           ./perlpackstatic.zip -e 'use Cwd;print(Cwd::cwd(),"\n");'
           ./perlpackstatic.zip -e 'open(F,"<","/mnt/perlpackarchive/perlpack.c");print(<F>);'
