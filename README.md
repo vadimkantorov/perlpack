@@ -22,6 +22,17 @@
 - `perlpackstatic` - built in [`Makefile`](./Makefile), the main binary with embedded Perl (using `/mnt/packperl/` as the "mount-point" for the embedded, read-only virtual FS)
 - `perlpackstaticzip` - built in [`Makefile`](./Makefile), a variant of the main binary, but also built with https://github.com/libarchive/libarchive library which allows mounting a zero-compression level ZIP archive at `/mnt/packperlarchive/`
 
+# Overridden functions
+- `open`
+- `access`
+- `stat`
+- `fstat`
+- `lseek`
+- `read`
+- `close`
+- `fopen`
+- `fileno`
+
 # Prior complete, but also more complex approaches
 - https://metacpan.org/dist/App-Staticperl/view/staticperl.pod
 - http://staticperl.schmorp.de/smallperl.html
