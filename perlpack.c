@@ -159,6 +159,7 @@ struct packfs_context* packfs_ensure_context()
         {
             packfs_archive_filename = packfs_proc_self_exe;
             puts("PACKFS1");
+            puts(packfs_archive_filename);
         }
         do
         {
