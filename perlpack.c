@@ -124,8 +124,8 @@ struct packfs_context* packfs_ensure_context()
         ""
 #endif
         );
-#undef PACKFS_STRING_VALUE
 #undef PACKFS_STRING_VALUE_
+#undef PACKFS_STRING_VALUE
 
         packfs_ctx.packfs_builtin_files_num = 0;
         packfs_ctx.packfs_builtin_starts = NULL;
@@ -156,11 +156,21 @@ struct packfs_context* packfs_ensure_context()
         
         const char* packfs_archive_filename = getenv("PACKFS_ARCHIVE");
         if(packfs_archive_filename == NULL || 0 == strlen(packfs_archive_filename) || 0 == strcmp(packfs_archive_filename, "/proc/self/exe") && packfs_proc_self_exe != NULL && 0 != strlen(packfs_proc_self_exe))
+        {
             packfs_archive_filename = packfs_proc_self_exe;
+            puts("PACKFS1");
+        }
+        else
+        {
+            puts("PACKFS2");
+        }
         do
         {
             if(packfs_archive_filename == NULL || 0 == strlen(packfs_archive_filename) || 0 == strncmp(packfs_ctx.packfs_archive_prefix, packfs_archive_filename, strlen(packfs_ctx.packfs_archive_prefix)))
+            {
+                puts("PACKFS3");
                 break;
+            }
             
             int fd = open(packfs_archive_filename, O_RDONLY);
             struct stat file_info = {0}; 
