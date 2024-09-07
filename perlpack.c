@@ -228,13 +228,14 @@ struct packfs_context* packfs_ensure_context()
                 if (r != ARCHIVE_OK)
                     break; //fprintf(stderr, "%s\n", archive_error_string(a));
             }
-
+#ifdef PACKFS_LOG
             size_t filenames_start = 0;
-            for(size_t i = 0; i < packfs_ctx.files_num; i++)
+            for(size_t i = 0; i < packfs_ctx.packfs_archive_files_num; i++)
             {
-                fprintf(stderr, "ZIP: %s\n", packfs_ctx.filenames + filenames_start);
-                filenames_start += packfs_ctx.filenames_lens[i] + 1;
+                fprintf(stderr, "%s: %s\n", packfs_archive_filename, packfs_ctx.packfs_archive_filenames + filenames_start);
+                filenames_start += packfs_ctx.packfs_archive_filenames_lens[i] + 1;
             }
+#endif
 
         }
         while(0);
