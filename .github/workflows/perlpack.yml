@@ -30,13 +30,13 @@ jobs:
        
       - name: Build and test perlpackstaticzip
         run: |
+          zip -0 perlpack.zip perlpack.c
           git clone --single-branch --depth 1 https://github.com/libarchive/libarchive
           make libarchive/.libs/libarchive.a
-          zip -0 perlpack.zip perlpack.c
           make perlpackstaticzip
           ./perlpackstaticzip
           ./perlpackstaticzip -e 'use Cwd;print(Cwd::cwd(),"\n");'
-          PACKFSLIBARCHIVE=perlpack.zip ./perlpackstaticzip -e 'open(F,"<","/mnt/perlpackarchive/perlpack.c");print(<F>);'
+          PACKFS_ARCHIVE=perlpack.zip ./perlpackstaticzip -e 'open(F,"<","/mnt/perlpackarchive/perlpack.c");print(<F>);'
        
       - name: Artifacts
         uses: actions/upload-artifact@v4
