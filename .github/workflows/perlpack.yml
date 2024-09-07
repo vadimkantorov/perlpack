@@ -43,7 +43,7 @@ jobs:
         with:
           path: |
             perlpackstatic
+            perlpackstaticzip
             perlpackstatic.zip
             perlpack.h
             libc_perlpack.a
-            perlpack
