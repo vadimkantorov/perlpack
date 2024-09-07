@@ -1,16 +1,13 @@
-#define PACKFS_STRING_VALUE_(x) #x
-#define PACKFS_STRING_VALUE(x) PACKFS_STRING_VALUE_(x)
-
-#ifdef PACKFS_BUILTIN_PREFIX
-#define packfs_builtin_prefix_expanded PACKFS_STRING_VALUE(PACKFS_BUILTIN_PREFIX)
-#else
-#define packfs_builtin_prefix_expanded "/mnt/perlpack/"
-#endif
-#ifdef PACKFS_ARCHIVE_PREFIX
-#define packfs_archive_prefix_expanded PACKFS_STRING_VALUE(PACKFS_ARCHIVE_PREFIX)
-#else
-#define packfs_archive_prefix_expanded "/mnt/perlpackarchive/"
-#endif
+//#ifdef PACKFS_BUILTIN_PREFIX
+//#define packfs_builtin_prefix_expanded PACKFS_STRING_VALUE(PACKFS_BUILTIN_PREFIX)
+//#else
+//#define packfs_builtin_prefix_expanded "/mnt/perlpack/"
+//#endif
+//#ifdef PACKFS_ARCHIVE_PREFIX
+//#define packfs_archive_prefix_expanded PACKFS_STRING_VALUE(PACKFS_ARCHIVE_PREFIX)
+//#else
+//#define packfs_archive_prefix_expanded "/mnt/perlpackarchive/"
+//#endif
 
 #define _GNU_SOURCE
 #include <string.h>
@@ -25,7 +22,7 @@
 #include <sys/mman.h>
 #include <sys/types.h>
 
-#ifdef PACKFS_ARCHIVE
+#ifdef PACKFS_ARCHIVE_PREFIX
 #include <archive.h>
 #include <archive_entry.h>
 // https://github.com/libarchive/libarchive/issues/2295
@@ -121,9 +118,23 @@ struct packfs_context* packfs_ensure_context()
         packfs_ctx.orig_fopen  = dlsym(RTLD_NEXT, "fopen");
         packfs_ctx.orig_fileno = dlsym(RTLD_NEXT, "fileno");
 #endif
-        strcpy(packfs_ctx.packfs_builtin_prefix, "/mnt/perlpack/");
-        strcpy(packfs_ctx.packfs_archive_prefix, "/mnt/perlpackarchive/");
-        // TODO: disable this assignment if prefix unset
+        
+#define PACKFS_STRING_VALUE_(x) #x
+#define PACKFS_STRING_VALUE(x) PACKFS_STRING_VALUE_(x)
+        strcpy(packfs_ctx.packfs_builtin_prefix,
+#ifdef PACKFS_BUILTIN_PREFIX
+            PACKFS_STRING_VALUE(PACKFS_BUILTIN_PREFIX)
+#else
+        ""
+#endif
+        );
+        strcpy(packfs_ctx.packfs_archive_prefix, 
+#ifdef PACKFS_ARCHIVE_PREFIX
+            PACKFS_STRING_VALUE(PACKFS_ARCHIVE_PREFIX)
+#else
+        ""
+#endif
+        );
         packfs_ctx.packfs_builtin_files_num = packfs_builtin_files_num;
         packfs_ctx.packfs_builtin_starts = packfs_builtin_starts;
         packfs_ctx.packfs_builtin_ends = packfs_builtin_ends;
@@ -136,11 +147,15 @@ struct packfs_context* packfs_ensure_context()
         
         packfs_ctx.initialized = 1;
         
-#ifdef PACKFS_ARCHIVE
+#ifdef PACKFS_ARCHIVE_PREFIX
         struct archive *a = archive_read_new();
         archive_read_support_format_zip(a);
         struct archive_entry *entry;
+        
         const char* packfs_archive_filename = getenv("PACKFS_ARCHIVE");
+        if(packfs_archive_filename == NULL || 0 == strlen(packfs_archive_filename) || 0 == strcmp(packfs_archive_filename, "/proc/self/exe"))
+            packfs_archive_filename = packfs_proc_self_exe;
+        
         do
         {
             if(packfs_archive_filename == NULL || strlen(packfs_archive_filename) == 0 || strncmp(packfs_ctx.packfs_archive_prefix, packfs_archive_filename, strlen(packfs_ctx.packfs_archive_prefix)) == 0)
