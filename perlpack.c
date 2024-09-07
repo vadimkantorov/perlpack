@@ -156,11 +156,7 @@ struct packfs_context* packfs_ensure_context()
         
         const char* packfs_archive_filename = getenv("PACKFS_ARCHIVE");
         if(packfs_archive_filename == NULL || 0 == strlen(packfs_archive_filename) || 0 == strcmp(packfs_archive_filename, "/proc/self/exe") && packfs_proc_self_exe != NULL && 0 != strlen(packfs_proc_self_exe))
-        {
             packfs_archive_filename = packfs_proc_self_exe;
-            puts("PACKFS1");
-            puts(packfs_archive_filename);
-        }
         do
         {
             if(packfs_archive_filename == NULL || 0 == strlen(packfs_archive_filename) || 0 == strncmp(packfs_ctx.packfs_archive_prefix, packfs_archive_filename, strlen(packfs_ctx.packfs_archive_prefix)))
@@ -276,7 +272,7 @@ int packfs_open(struct packfs_context* packfs_ctx, const char* path, FILE** out)
         }
     }
 
-#if PACKFS_ARCHIVE
+#if PACKFS_ARCHIVE_PREFIX
     else if(packfs_ctx->packfs_archive_files_num > 0 && strncmp(packfs_ctx->packfs_archive_prefix, path, strlen(packfs_ctx->packfs_archive_prefix)) == 0)
     {
         const char* path_without_prefix = path + strlen(packfs_ctx->packfs_archive_prefix);
