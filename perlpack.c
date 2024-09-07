@@ -456,9 +456,9 @@ FILE* fopen(const char *path, const char *mode)
         FILE* res = NULL;
         if(packfs_open(packfs_ctx, path, &res) >= 0)
         {
-    #ifdef PACKFS_LOG
+#ifdef PACKFS_LOG
             fprintf(stderr, "packfs: Fopen(\"%s\", \"%s\") == %p\n", path, mode, (void*)res);
-    #endif
+#endif
             return res;
         }
     }
@@ -496,12 +496,15 @@ int open(const char *path, int flags, ...)
     struct packfs_context* packfs_ctx = packfs_ensure_context();
     if(!packfs_ctx->disabled)
     {
+#ifdef PACKFS_LOG
+        fprintf(stderr, "packfs: Open(\"%s\", %d)\n", path, flags);
+#endif
         int res = packfs_open(packfs_ctx, path, NULL);
         if(res >= 0)
         { 
-    #ifdef PACKFS_LOG
+#ifdef PACKFS_LOG
             fprintf(stderr, "packfs: Open(\"%s\", %d) == %d\n", path, flags, res);
-    #endif
+#endif
             return res;
         }
     }
@@ -521,9 +524,9 @@ int close(int fd)
         int res = packfs_close(packfs_ctx, fd);
         if(res >= -1)
         {
-    #ifdef PACKFS_LOG
+#ifdef PACKFS_LOG
             fprintf(stderr, "packfs: Close(%d) == %d\n", fd, res);
-    #endif
+#endif
             return res;
         }
     }
@@ -544,9 +547,9 @@ ssize_t read(int fd, void* buf, size_t count)
         ssize_t res = packfs_read(packfs_ctx, fd, buf, count);
         if(res >= 0)
         {
-    #ifdef PACKFS_LOG
+#ifdef PACKFS_LOG
             fprintf(stderr, "packfs: Read(%d, %p, %zu) == %d\n", fd, buf, count, (int)res);
-    #endif
+#endif
             return res;
         }
     }
@@ -566,9 +569,9 @@ off_t lseek(int fd, off_t offset, int whence)
         int res = packfs_seek(packfs_ctx, fd, (long)offset, whence);
         if(res >= 0)
         {
-    #ifdef PACKFS_LOG
+#ifdef PACKFS_LOG
             fprintf(stderr, "packfs: Seek(%d, %d, %d) == %d\n", fd, (int)offset, whence, (int)res);
-    #endif
+#endif
             return res;
         }
     }
@@ -589,9 +592,9 @@ int access(const char *path, int flags)
         int res = packfs_access(packfs_ctx, path);
         if(res >= -1)
         {
-    #ifdef PACKFS_LOG
+#ifdef PACKFS_LOG
             fprintf(stderr, "packfs: Access(\"%s\", %d) == %d\n", path, flags, res);
-    #endif
+#endif
             return res;
         }
     }
@@ -611,9 +614,9 @@ int stat(const char *restrict path, struct stat *restrict statbuf)
         int res = packfs_stat(packfs_ctx, path, -1, statbuf);
         if(res >= -1)
         {
-    #ifdef PACKFS_LOG
+#ifdef PACKFS_LOG
             fprintf(stderr, "packfs: Stat(\"%s\", %p) == %d\n", path, (void*)statbuf, res);
-    #endif
+#endif
             return res;
         }
     }
@@ -633,9 +636,9 @@ int fstat(int fd, struct stat * statbuf)
         int res = packfs_stat(packfs_ctx, NULL, fd, statbuf);
         if(res >= -1)
         {
-    #ifdef PACKFS_LOG
+#ifdef PACKFS_LOG
             fprintf(stderr, "packfs: Fstat(%d, %p) == %d\n", fd, (void*)statbuf, res);
-    #endif
+#endif
             return res;
         }
     }
