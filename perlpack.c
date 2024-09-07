@@ -22,6 +22,13 @@
 #include <sys/mman.h>
 #include <sys/types.h>
 
+// https://github.com/google/fuse-archive/blob/main/src/main.cc
+// https://github.com/yandex-cloud/geesefs/blob/master/internal/goofys_fuse.go
+// https://github.com/winfsp/cgofuse/blob/master/examples/memfs/memfs.go
+// .getattr = my_getattr,
+// .readlink = my_readlink,
+// .readdir = my_readdir,
+
 #ifdef PACKFS_ARCHIVE_PREFIX
 #include <archive.h>
 #include <archive_entry.h>
@@ -40,13 +47,6 @@ static ssize_t new_file_read(struct archive *a, void *client_data, const void **
     return old_file_read(a, client_data, buff);
 }
 #endif
-
-// https://github.com/google/fuse-archive/blob/main/src/main.cc
-// https://github.com/yandex-cloud/geesefs/blob/master/internal/goofys_fuse.go
-// https://github.com/winfsp/cgofuse/blob/master/examples/memfs/memfs.go
-// .getattr = my_getattr,
-// .readlink = my_readlink,
-// .readdir = my_readdir,
 
 #include "perlpack.h"
 const char* packfs_proc_self_exe;
@@ -86,8 +86,8 @@ struct packfs_context
     char packfs_archive_prefix[packfs_filepath_max_len];
     void* packfs_archive_fileptr;
     size_t packfs_archive_mmapsize;
-    char packfs_archive_filenames[packfs_archive_filenames_num * packfs_filepath_max_len];
     size_t packfs_archive_filenames_lens[packfs_archive_filenames_num], packfs_archive_offsets[packfs_archive_filenames_num], packfs_archive_sizes[packfs_archive_filenames_num];
+    char packfs_archive_filenames[packfs_archive_filenames_num * packfs_filepath_max_len];
 };
 
 struct packfs_context* packfs_ensure_context()
@@ -135,18 +135,26 @@ struct packfs_context* packfs_ensure_context()
         ""
 #endif
         );
-        packfs_ctx.packfs_builtin_files_num = packfs_builtin_files_num;
-        packfs_ctx.packfs_builtin_starts = packfs_builtin_starts;
-        packfs_ctx.packfs_builtin_ends = packfs_builtin_ends;
-        packfs_ctx.packfs_builtin_safepaths = packfs_builtin_safepaths;
-        packfs_ctx.packfs_builtin_abspaths = packfs_builtin_abspaths;
+        
+        packs_ctx.packfs_builtin_files_num = 0;
+        packfs_ctx.packfs_builtin_starts = NULL;
+        packfs_ctx.packfs_builtin_ends = NULL;
+        packfs_ctx.packfs_builtin_safepaths = NULL;
+        packfs_ctx.packfs_builtin_abspaths = NULL;
 
         packfs_ctx.packfs_archive_files_num = 0;
         packfs_ctx.packfs_archive_mmapsize = 0;
         packfs_ctx.packfs_archive_fileptr = NULL;
         
         packfs_ctx.initialized = 1;
-        
+
+#ifdef PACKFS_BUILTIN_PREFIX
+        packfs_ctx.packfs_builtin_files_num = packfs_builtin_files_num;
+        packfs_ctx.packfs_builtin_starts = packfs_builtin_starts;
+        packfs_ctx.packfs_builtin_ends = packfs_builtin_ends;
+        packfs_ctx.packfs_builtin_safepaths = packfs_builtin_safepaths;
+        packfs_ctx.packfs_builtin_abspaths = packfs_builtin_abspaths;
+#endif
 #ifdef PACKFS_ARCHIVE_PREFIX
         struct archive *a = archive_read_new();
         archive_read_support_format_zip(a);
