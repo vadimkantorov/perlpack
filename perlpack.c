@@ -160,17 +160,10 @@ struct packfs_context* packfs_ensure_context()
             packfs_archive_filename = packfs_proc_self_exe;
             puts("PACKFS1");
         }
-        else
-        {
-            puts("PACKFS2");
-        }
         do
         {
             if(packfs_archive_filename == NULL || 0 == strlen(packfs_archive_filename) || 0 == strncmp(packfs_ctx.packfs_archive_prefix, packfs_archive_filename, strlen(packfs_ctx.packfs_archive_prefix)))
-            {
-                puts("PACKFS3");
                 break;
-            }
             
             int fd = open(packfs_archive_filename, O_RDONLY);
             struct stat file_info = {0}; 
