@@ -1,14 +1,3 @@
-//#ifdef PACKFS_BUILTIN_PREFIX
-//#define packfs_builtin_prefix_expanded PACKFS_STRING_VALUE(PACKFS_BUILTIN_PREFIX)
-//#else
-//#define packfs_builtin_prefix_expanded "/mnt/perlpack/"
-//#endif
-//#ifdef PACKFS_ARCHIVE_PREFIX
-//#define packfs_archive_prefix_expanded PACKFS_STRING_VALUE(PACKFS_ARCHIVE_PREFIX)
-//#else
-//#define packfs_archive_prefix_expanded "/mnt/perlpackarchive/"
-//#endif
-
 #define _GNU_SOURCE
 #include <string.h>
 #include <stdio.h>
@@ -135,7 +124,9 @@ struct packfs_context* packfs_ensure_context()
         ""
 #endif
         );
-        
+#undef PACKFS_STRING_VALUE
+#undef PACKFS_STRING_VALUE_
+
         packfs_ctx.packfs_builtin_files_num = 0;
         packfs_ctx.packfs_builtin_starts = NULL;
         packfs_ctx.packfs_builtin_ends = NULL;
@@ -164,12 +155,11 @@ struct packfs_context* packfs_ensure_context()
         struct archive_entry *entry;
         
         const char* packfs_archive_filename = getenv("PACKFS_ARCHIVE");
-        if(packfs_archive_filename == NULL || 0 == strlen(packfs_archive_filename) || 0 == strcmp(packfs_archive_filename, "/proc/self/exe"))
+        if(packfs_archive_filename == NULL || 0 == strlen(packfs_archive_filename) || 0 == strcmp(packfs_archive_filename, "/proc/self/exe") && packfs_proc_self_exe != NULL && 0 != strlen(packfs_proc_self_exe))
             packfs_archive_filename = packfs_proc_self_exe;
-        
         do
         {
-            if(packfs_archive_filename == NULL || strlen(packfs_archive_filename) == 0 || strncmp(packfs_ctx.packfs_archive_prefix, packfs_archive_filename, strlen(packfs_ctx.packfs_archive_prefix)) == 0)
+            if(packfs_archive_filename == NULL || 0 == strlen(packfs_archive_filename) || 0 == strncmp(packfs_ctx.packfs_archive_prefix, packfs_archive_filename, strlen(packfs_ctx.packfs_archive_prefix)))
                 break;
             
             int fd = open(packfs_archive_filename, O_RDONLY);
