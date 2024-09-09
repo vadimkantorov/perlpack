@@ -229,12 +229,8 @@ struct packfs_context* packfs_ensure_context()
                     break; //fprintf(stderr, "%s\n", archive_error_string(a));
             }
 #ifdef PACKFS_LOG
-            size_t filenames_start = 0;
-            for(size_t i = 0; i < packfs_ctx.packfs_archive_files_num; i++)
-            {
+            for(size_t i = 0, filenames_start = 0; i < packfs_ctx.packfs_archive_files_num; filenames_start += (packfs_ctx.packfs_archive_filenames_lens[i] + 1), i++)
                 fprintf(stderr, "%s: %s\n", packfs_archive_filename, packfs_ctx.packfs_archive_filenames + filenames_start);
-                filenames_start += packfs_ctx.packfs_archive_filenames_lens[i] + 1;
-            }
 #endif
 
         }
@@ -253,6 +249,11 @@ const char* packfs_sanitize_path(const char* path)
     return (path != NULL && strlen(path) > 2 && path[0] == '.' && path[1] == '/') ? (path + 2) : path;
 }
 
+int packfs_strncmp(const char* prefix, const char* path, size_t count)
+{
+    return (prefix != NULL && prefix[0] != '\0' && path != NULL && path[0] != '\0') ? strncmp(prefix, path, count) : 1;
+}
+
 int packfs_open(struct packfs_context* packfs_ctx, const char* path, FILE** out)
 {
     path = packfs_sanitize_path(path);
@@ -260,7 +261,7 @@ int packfs_open(struct packfs_context* packfs_ctx, const char* path, FILE** out)
     FILE* fileptr = NULL;
     size_t filesize = 0;
     
-    if(packfs_ctx->packfs_builtin_files_num > 0 && strncmp(packfs_ctx->packfs_builtin_prefix, path, strlen(packfs_ctx->packfs_builtin_prefix)) == 0)
+    if(packfs_ctx->packfs_builtin_files_num > 0 && 0 == packfs_strncmp(packfs_ctx->packfs_builtin_prefix, path, strlen(packfs_ctx->packfs_builtin_prefix)))
     {
         for(size_t i = 0; i < packfs_ctx->packfs_builtin_files_num; i++)
         {
@@ -274,13 +275,11 @@ int packfs_open(struct packfs_context* packfs_ctx, const char* path, FILE** out)
     }
 
 #ifdef PACKFS_ARCHIVE_PREFIX
-    else if(packfs_ctx->packfs_archive_files_num > 0 && strncmp(packfs_ctx->packfs_archive_prefix, path, strlen(packfs_ctx->packfs_archive_prefix)) == 0)
+    else if(packfs_ctx->packfs_archive_files_num > 0 && 0 == packfs_strncmp(packfs_ctx->packfs_archive_prefix, path, strlen(packfs_ctx->packfs_archive_prefix)))
     {
-        const char* path_without_prefix = path + strlen(packfs_ctx->packfs_archive_prefix);
-        size_t filenames_start = 0;
-        for(size_t i = 0; i < packfs_ctx->packfs_archive_files_num; i++)
+        for(size_t i = 0, filenames_start = 0, prefix_stlen = strlen(packfs_ctx->packfs_archive_prefix); i < packfs_ctx->packfs_archive_files_num; filenames_start += (packfs_ctx->packfs_archive_filenames_lens[i] + 1), i++)
         {
-            if(0 == strcmp(packfs_ctx->packfs_archive_filenames + filenames_start, path_without_prefix))
+            if(0 == strcmp(packfs_ctx->packfs_archive_filenames + filenames_start, path + prefix_strlen))
             {
                 filesize = packfs_ctx->packfs_archive_sizes[i];
                 size_t offset = packfs_ctx->packfs_archive_offsets[i];
@@ -302,7 +301,7 @@ int packfs_open(struct packfs_context* packfs_ctx, const char* path, FILE** out)
                 }
                 break;
             }
-            filenames_start += packfs_ctx->packfs_archive_filenames_lens[i] + 1;
+            ;
         }
     }
 #endif
@@ -388,17 +387,26 @@ int packfs_access(struct packfs_context* packfs_ctx, const char* path)
 {
     path = packfs_sanitize_path(path);
 
-    if(strncmp(packfs_ctx->packfs_builtin_prefix, path, strlen(packfs_ctx->packfs_builtin_prefix)) == 0)
+    if(0 == packfs_strncmp(packfs_ctx->packfs_builtin_prefix, path, strlen(packfs_ctx->packfs_builtin_prefix)))
     {
         for(size_t i = 0; i < packfs_ctx->packfs_builtin_files_num; i++)
         {
             if(0 == strcmp(path, packfs_ctx->packfs_builtin_abspaths[i]))
-            {
                 return 0;
-            }
         }
         return -1;
     }
+    
+    if(0 == packfs_strncmp(packfs_ctx->packfs_archive_prefix, path, strlen(packfs_ctx->packfs_archive_prefix)))
+    {
+        for(size_t i = 0, filenames_start = 0, prefix_strlen = strlen(packfs_ctx->packfs_archive_prefix); i < packfs_ctx->packfs_archive_files_num; filenames_start += (packfs_ctx.packfs_archive_filenames_lens[i] + 1), i++)
+        {
+            if(0 == strcmp(path + prefix_strlen, packfs_ctx.packfs_archive_filenames + filenames_start))
+                return 0;
+        }
+        return -1;
+    }
+    
     return -2;
 }
 
@@ -406,7 +414,7 @@ int packfs_stat(struct packfs_context* packfs_ctx, const char* path, int fd, str
 {
     path = packfs_sanitize_path(path);
     
-    if(path != NULL && strncmp(packfs_ctx->packfs_builtin_prefix, path, strlen(packfs_ctx->packfs_builtin_prefix)) == 0)
+    if(0 == packfs_strncmp(packfs_ctx->packfs_builtin_prefix, path, strlen(packfs_ctx->packfs_builtin_prefix)))
     {
         for(size_t i = 0; i < packfs_ctx->packfs_builtin_files_num; i++)
         {
@@ -421,6 +429,22 @@ int packfs_stat(struct packfs_context* packfs_ctx, const char* path, int fd, str
                 //else
                 {
                     statbuf->st_size = (off_t)(packfs_ctx->packfs_builtin_ends[i] - packfs_ctx->packfs_builtin_starts[i]);
+                    statbuf->st_mode = S_IFREG;
+                }
+                return 0;
+            }
+        }
+        return -1;
+    }
+    if(0 == packfs_strncmp(packfs_ctx->packfs_archive_prefix, path, strlen(packfs_ctx->packfs_archive_prefix)))
+    {
+        for(size_t i = 0, filenames_start = 0, prefix_strlen = strlen(packfs_ctx->packfs_archive_prefix); i < packfs_ctx->packfs_archive_files_num; filenames_start += (packfs_ctx.packfs_archive_filenames_lens[i] + 1), i++)
+        {
+            if(0 == strcmp(path + prefix_strlen, packfs_ctx.packfs_archive_filenames + filenames_start))
+            {
+                *statbuf = (struct stat){0};
+                {
+                    statbuf->st_size = (off_t)(packfs_ctx->packfs_archive_sizes[i]);
                     statbuf->st_mode = S_IFREG;
                 }
                 return 0;
