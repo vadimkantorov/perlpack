@@ -277,7 +277,7 @@ int packfs_open(struct packfs_context* packfs_ctx, const char* path, FILE** out)
 #ifdef PACKFS_ARCHIVE_PREFIX
     else if(packfs_ctx->packfs_archive_files_num > 0 && 0 == packfs_strncmp(packfs_ctx->packfs_archive_prefix, path, strlen(packfs_ctx->packfs_archive_prefix)))
     {
-        for(size_t i = 0, filenames_start = 0, prefix_stlen = strlen(packfs_ctx->packfs_archive_prefix); i < packfs_ctx->packfs_archive_files_num; filenames_start += (packfs_ctx->packfs_archive_filenames_lens[i] + 1), i++)
+        for(size_t i = 0, filenames_start = 0, prefix_strlen = strlen(packfs_ctx->packfs_archive_prefix); i < packfs_ctx->packfs_archive_files_num; filenames_start += (packfs_ctx->packfs_archive_filenames_lens[i] + 1), i++)
         {
             if(0 == strcmp(packfs_ctx->packfs_archive_filenames + filenames_start, path + prefix_strlen))
             {
