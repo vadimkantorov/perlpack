@@ -399,9 +399,9 @@ int packfs_access(struct packfs_context* packfs_ctx, const char* path)
     
     if(0 == packfs_strncmp(packfs_ctx->packfs_archive_prefix, path, strlen(packfs_ctx->packfs_archive_prefix)))
     {
-        for(size_t i = 0, filenames_start = 0, prefix_strlen = strlen(packfs_ctx->packfs_archive_prefix); i < packfs_ctx->packfs_archive_files_num; filenames_start += (packfs_ctx.packfs_archive_filenames_lens[i] + 1), i++)
+        for(size_t i = 0, filenames_start = 0, prefix_strlen = strlen(packfs_ctx->packfs_archive_prefix); i < packfs_ctx->packfs_archive_files_num; filenames_start += (packfs_ctx->packfs_archive_filenames_lens[i] + 1), i++)
         {
-            if(0 == strcmp(path + prefix_strlen, packfs_ctx.packfs_archive_filenames + filenames_start))
+            if(0 == strcmp(path + prefix_strlen, packfs_ctx->packfs_archive_filenames + filenames_start))
                 return 0;
         }
         return -1;
@@ -438,9 +438,9 @@ int packfs_stat(struct packfs_context* packfs_ctx, const char* path, int fd, str
     }
     if(0 == packfs_strncmp(packfs_ctx->packfs_archive_prefix, path, strlen(packfs_ctx->packfs_archive_prefix)))
     {
-        for(size_t i = 0, filenames_start = 0, prefix_strlen = strlen(packfs_ctx->packfs_archive_prefix); i < packfs_ctx->packfs_archive_files_num; filenames_start += (packfs_ctx.packfs_archive_filenames_lens[i] + 1), i++)
+        for(size_t i = 0, filenames_start = 0, prefix_strlen = strlen(packfs_ctx->packfs_archive_prefix); i < packfs_ctx->packfs_archive_files_num; filenames_start += (packfs_ctx->packfs_archive_filenames_lens[i] + 1), i++)
         {
-            if(0 == strcmp(path + prefix_strlen, packfs_ctx.packfs_archive_filenames + filenames_start))
+            if(0 == strcmp(path + prefix_strlen, packfs_ctx->packfs_archive_filenames + filenames_start))
             {
                 *statbuf = (struct stat){0};
                 {
