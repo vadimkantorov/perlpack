@@ -5,22 +5,18 @@
 - embeds `*.pm` modules into the executable
 - showcases embedding a user Perl script (for illustration is used `perlpack.pl`, see [`Makefile`](./Makefile))
 - showcases embedding arbitrary files along (see [`Makefile`](./Makefile) and add files into the `packfs` directory)
-- allows appending an uncompressed ZIP with more custom files and lets Perl access them transparently
-- file I/O for the above is enabled by a custom read-only virtual FS [overriding](https://github.com/Perl/perl5/issues/22571) I/O libc/stdio function calls; ZIP is supported via linking with https://github.com/libarchive/libarchive
 
 # Limitations
 - not all I/O function calls are reimplemented
 - it's only a proof-of-concept, very little tested
-- compressed ZIP files are not supported: waiting on https://github.com/libarchive/libarchive/issues/2306
 
 # Files of interest
-- [`perlpack.c`](./perlpack.c) - the main C program which embeds Perl, includes [`perlpack.h`](./perlpack.h) and override I/O callback to enable transparent access to the embedded files and to a ZIP file
+- [`perlpack.c`](./perlpack.c) - the main C program which embeds Perl, includes [`perlpack.h`](./perlpack.h) and override I/O callback to enable transparent access to the embedded files
 - [`perlpack.pl`](./perlpack.pl) - generates in place a more non-empty [`perlpack.h`](./perlpack.h), default [`perlpack.h`](./perlpack.h) provided only from illustrative purposes
-- [`Makefile`](./Makefile) - showcases building of main binaries `perlpackstatic` / `perlpackstaticzip` (and embedded `myscript.o`, `perlpack.o`)
+- [`Makefile`](./Makefile) - showcases building of main binaries `perlpackstatic` (and embedded `myscript.o`, `perlpack.o`)
 - [`.github/workflows/perlpack.yml`](.github/workflows/perlpack.yml) - showcases testing command sequence
 - `libc_perlpack.a` - built in [`Makefile`](./Makefile), a musl libc modification which renames file-related functions like `open(...)` -> `orig_open(...)`, this enables overriding these file-related functions without dynamic loading (a typical way of using a shared library with overrides and `LD_PRELOAD` loader mechanism for tracing file-related function calls is at https://gist.github.com/vadimkantorov/2a4e092889b7132acd3b7ddfc2f2f907)
 - `perlpackstatic` - built in [`Makefile`](./Makefile), the main binary with embedded Perl (using `/mnt/packperl/` as the "mount-point" for the embedded, read-only virtual FS)
-- `perlpackstaticzip`, `perlpackstatic.zip` - built in [`Makefile`](./Makefile) and in [`.github/workflows/perlpack.yml`](./.github/workflows/perlpack.yml) , a variant of the main binary, but also built with https://github.com/libarchive/libarchive library which allows mounting a zero-compression level ZIP archive at `/mnt/packperlarchive/`
 
 # Overridden functions
 - `open`

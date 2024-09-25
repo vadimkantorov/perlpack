@@ -7,9 +7,6 @@ MODULES_def = -DPERLPACK_mro -DPERLPACK_Devel__Peek -DPERLPACK_File__DosGlob -DP
 MODULES_a = mro/mro.a Devel/Peek/Peek.a File/DosGlob/DosGlob.a File/Glob/Glob.a Sys/Syslog/Syslog.a Sys/Hostname/Hostname.a PerlIO/via/via.a PerlIO/mmap/mmap.a PerlIO/encoding/encoding.a PerlIO/scalar/scalar.a B/B.a attributes/attributes.a Unicode/Normalize/Normalize.a Unicode/Collate/Collate.a threads/threads.a threads/shared/shared.a IPC/SysV/SysV.a re/re.a Digest/MD5/MD5.a Digest/SHA/SHA.a SDBM_File/SDBM_File.a Math/BigInt/FastCalc/FastCalc.a Data/Dumper/Dumper.a I18N/Langinfo/Langinfo.a Time/HiRes/HiRes.a Time/Piece/Piece.a IO/IO.a Socket/Socket.a Hash/Util/FieldHash/FieldHash.a Hash/Util/Util.a Filter/Util/Call/Call.a POSIX/POSIX.a Encode/Unicode/Unicode.a Encode/Encode.a Encode/JP/JP.a Encode/KR/KR.a Encode/EBCDIC/EBCDIC.a Encode/CN/CN.a Encode/Symbol/Symbol.a Encode/Byte/Byte.a Encode/TW/TW.a Compress/Raw/Zlib/Zlib.a Compress/Raw/Bzip2/Bzip2.a MIME/Base64/Base64.a Cwd/Cwd.a Storable/Storable.a List/Util/Util.a Fcntl/Fcntl.a Opcode/Opcode.a
 MODULES_ext = mro Devel/Peek File/DosGlob File/Glob Sys/Syslog Sys/Hostname PerlIO/via PerlIO/mmap PerlIO/encoding PerlIO/scalar B attributes Unicode/Normalize Unicode/Collate threads threads/shared IPC/SysV re Digest/MD5 Digest/SHA SDBM_File Math/BigInt/FastCalc Data/Dumper I18N/Langinfo Time/HiRes Time/Piece IO Socket Hash/Util/FieldHash Hash/Util Filter/Util/Call POSIX Encode/Unicode Encode Encode/JP Encode/KR Encode/EBCDIC Encode/CN Encode/Symbol Encode/Byte Encode/TW Compress/Raw/Zlib Compress/Raw/Bzip2 MIME/Base64 Cwd Storable List/Util Fcntl Opcode   
 
-libarchive/.libs/libarchive.a:
-	cd libarchive && sh build/autogen.sh && sh configure --without-zlib --without-bz2lib  --without-libb2 --without-iconv --without-lz4  --without-zstd --without-lzma --without-cng  --without-xml2 --without-expat --without-openssl && $(MAKE)
-
 build/libperl.a:
 	mkdir -p build
 	curl -L $(URLPERL) | tar -xzf - --strip-components=1 --directory=build
@@ -40,10 +37,3 @@ perlpackstatic:
 	perl perlpack.pl -i packfs -o perlpack.h --prefix=/mnt/perlpack/ --ld="$(LD)"
 	cp perlpack.pl myscript.pl && $(LD) -r -b binary -o myscript.o myscript.pl
 	$(CC) -o $@ perlpack.c myscript.o -DPACKFS_STATIC -DPACKFS_BUILTIN_PREFIX=/mnt/perlpack/  -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -I$(PWD)/build -I/usr/local/include   -Wl,-E -fstack-protector-strong -fwrapv -fno-strict-aliasing -L/usr/local/lib build/libperl.a libc_perlpack.a -lpthread -ldl -lm -lutil $(STATICLDFLAGS)  $(MODULES_def) $(shell printf "build/lib/auto/%s " $(MODULES_a)) @perlpack.h.txt
-
-perlpackstaticzip:
-	-rm -rf packfs/man packfs/lib/*/pod/
-	-find packfs -name '*.pod' -o -name '*.ld' -o -name '*.a' -o -name '*.h' -delete
-	perl perlpack.pl -i packfs -o perlpack.h --prefix=/mnt/perlpack/ --ld="$(LD)"
-	cp perlpack.pl myscript.pl && $(LD) -r -b binary -o myscript.o myscript.pl
-	$(CC) -o $@ perlpack.c myscript.o -DPACKFS_STATIC -DPACKFS_BUILTIN_PREFIX=/mnt/perlpack/ -DPACKFS_ARCHIVE_PREFIX=/mnt/perlpackarchive/ -larchive -Llibarchive/.libs -Ilibarchive -Ilibarchive/libarchive   -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -I$(PWD)/build -I/usr/local/include   -Wl,-E -fstack-protector-strong -fwrapv -fno-strict-aliasing -L/usr/local/lib build/libperl.a libc_perlpack.a -lpthread -ldl -lm -lutil $(STATICLDFLAGS)  $(MODULES_def) $(shell printf "build/lib/auto/%s " $(MODULES_a)) @perlpack.h.txt
