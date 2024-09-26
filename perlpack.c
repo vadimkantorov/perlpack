@@ -712,7 +712,6 @@ int main(int argc, char *argv[], char* envp[])
         strcpy(script, argv[2]);
     }
     
-    packfs_proc_self_exe = argv[0];
     packfs_ensure_context();
 
     PERL_SYS_INIT3(&argc, &argv, &envp);
