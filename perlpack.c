@@ -22,6 +22,12 @@ extern int      __real_stat(const char *restrict path, struct stat *restrict sta
 extern int      __real_fstat(int fd, struct stat * statbuf);                            
 extern FILE*    __real_fopen(const char *path, const char *mode);                       
 extern int      __real_fileno(FILE* stream);                                            
+    
+size_t packfs_builtin_files_num;
+const char** packfs_builtin_starts;
+const char** packfs_builtin_ends;
+const char** packfs_builtin_safepaths;
+const char** packfs_builtin_abspaths;
 
 enum {
     packfs_filefd_min = 1000000000, 
@@ -38,11 +44,6 @@ struct packfs_context
     
     char packfs_builtin_prefix[packfs_filepath_max_len];
     
-    size_t packfs_builtin_files_num;
-    const char** packfs_builtin_starts;
-    const char** packfs_builtin_ends;
-    const char** packfs_builtin_safepaths;
-    const char** packfs_builtin_abspaths;
 };
 
 struct packfs_context* packfs_ensure_context()
@@ -64,22 +65,11 @@ struct packfs_context* packfs_ensure_context()
 #undef PACKFS_STRING_VALUE_
 #undef PACKFS_STRING_VALUE
 
-        packfs_ctx.packfs_builtin_files_num = 0;
-        packfs_ctx.packfs_builtin_starts = NULL;
-        packfs_ctx.packfs_builtin_ends = NULL;
-        packfs_ctx.packfs_builtin_safepaths = NULL;
-        packfs_ctx.packfs_builtin_abspaths = NULL;
-        
         packfs_ctx.packfs_initialized = 1;
         packfs_ctx.packfs_disabled = 1;
 
 #ifdef PACKFS_BUILTIN_PREFIX
         packfs_ctx.packfs_disabled = 0;
-        packfs_ctx.packfs_builtin_files_num = packfs_builtin_files_num;
-        packfs_ctx.packfs_builtin_starts = packfs_builtin_starts;
-        packfs_ctx.packfs_builtin_ends = packfs_builtin_ends;
-        packfs_ctx.packfs_builtin_safepaths = packfs_builtin_safepaths;
-        packfs_ctx.packfs_builtin_abspaths = packfs_builtin_abspaths;
 #endif
     }
     
@@ -104,14 +94,14 @@ int packfs_open(struct packfs_context* packfs_ctx, const char* path, FILE** out)
     FILE* fileptr = NULL;
     size_t filesize = 0;
     
-    if(packfs_ctx->packfs_builtin_files_num > 0 && 0 == packfs_strncmp(packfs_ctx->packfs_builtin_prefix, path, strlen(packfs_ctx->packfs_builtin_prefix)))
+    if(packfs_builtin_files_num > 0 && 0 == packfs_strncmp(packfs_ctx->packfs_builtin_prefix, path, strlen(packfs_ctx->packfs_builtin_prefix)))
     {
-        for(size_t i = 0; i < packfs_ctx->packfs_builtin_files_num; i++)
+        for(size_t i = 0; i < packfs_builtin_files_num; i++)
         {
-            if(0 == strcmp(path, packfs_ctx->packfs_builtin_abspaths[i]))
+            if(0 == strcmp(path, packfs_builtin_abspaths[i]))
             {
-                filesize = (size_t)(packfs_ctx->packfs_builtin_ends[i] - packfs_ctx->packfs_builtin_starts[i]);
-                fileptr = fmemopen((void*)packfs_ctx->packfs_builtin_starts[i], filesize, "r");
+                filesize = (size_t)(packfs_builtin_ends[i] - packfs_builtin_starts[i]);
+                fileptr = fmemopen((void*)packfs_builtin_starts[i], filesize, "r");
                 break;
             }
         }
@@ -200,9 +190,9 @@ int packfs_access(struct packfs_context* packfs_ctx, const char* path)
 
     if(0 == packfs_strncmp(packfs_ctx->packfs_builtin_prefix, path, strlen(packfs_ctx->packfs_builtin_prefix)))
     {
-        for(size_t i = 0; i < packfs_ctx->packfs_builtin_files_num; i++)
+        for(size_t i = 0; i < packfs_builtin_files_num; i++)
         {
-            if(0 == strcmp(path, packfs_ctx->packfs_builtin_abspaths[i]))
+            if(0 == strcmp(path, packfs_builtin_abspaths[i]))
                 return 0;
         }
         return -1;
@@ -217,9 +207,9 @@ int packfs_stat(struct packfs_context* packfs_ctx, const char* path, int fd, str
     
     if(0 == packfs_strncmp(packfs_ctx->packfs_builtin_prefix, path, strlen(packfs_ctx->packfs_builtin_prefix)))
     {
-        for(size_t i = 0; i < packfs_ctx->packfs_builtin_files_num; i++)
+        for(size_t i = 0; i < packfs_builtin_files_num; i++)
         {
-            if(0 == strcmp(path, packfs_ctx->packfs_builtin_abspaths[i]))
+            if(0 == strcmp(path, packfs_builtin_abspaths[i]))
             {
                 *statbuf = (struct stat){0};
                 //if(packfs_builtin[i].isdir)
@@ -229,7 +219,7 @@ int packfs_stat(struct packfs_context* packfs_ctx, const char* path, int fd, str
                 //}
                 //else
                 {
-                    statbuf->st_size = (off_t)(packfs_ctx->packfs_builtin_ends[i] - packfs_ctx->packfs_builtin_starts[i]);
+                    statbuf->st_size = (off_t)(packfs_builtin_ends[i] - packfs_builtin_starts[i]);
                     statbuf->st_mode = S_IFREG;
                 }
                 return 0;
