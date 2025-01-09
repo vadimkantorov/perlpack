@@ -13,7 +13,7 @@ build/libperl.a:
 	$(MAKE) -C build
 	$(MAKE) -C build install
 
-perlpackstatic: build/libperl.a libc_perlpack.a
+perlpackstatic: build/libperl.a
 	-echo BEFORE; find packfs 
 	-rm -rf packfs/man packfs/lib/*/pod/
 	-find packfs -name '*.pod' -o -name '*.ld' -o -name '*.a' -o -name '*.h' -delete

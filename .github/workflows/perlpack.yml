@@ -31,4 +31,3 @@ jobs:
           path: |
             perlpackstatic
             perlpack.h
-            libc_perlpack.a
