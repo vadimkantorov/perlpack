@@ -41,7 +41,7 @@ size_t packfs_filesize[packfs_filefd_max - packfs_filefd_min];
 #define PACKFS_STRING_VALUE_(x) #x
 #define PACKFS_STRING_VALUE(x) PACKFS_STRING_VALUE_(x)
 // TODO: append / if missing
-char packfs_builtin_prefix[packfs_filepath_max_len] = PACKFS_STRING_VALUE(PACKFS_BUILTIN_PREFIX);
+char packfs_builtin_prefix[] = PACKFS_STRING_VALUE(PACKFS_BUILTIN_PREFIX);
 
 
 struct packfs_context { };
@@ -50,7 +50,7 @@ struct packfs_context* packfs_ensure_context()
 {
     static struct packfs_context packfs_ctx = {0};
 
-    if(packfs_ctx.packfs_initialized != 1)
+    if(packfs_initialized != 1)
     {
         packfs_initialized = 1;
         packfs_disabled = 1;
