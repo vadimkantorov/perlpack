@@ -13,9 +13,8 @@ build/libperl.a:
 	$(MAKE) -C build install
 
 perlpackstatic: build/libperl.a
-	-echo BEFORE; find packfs 
-	-rm -rf packfs/man packfs/lib/*/pod/
-	-find packfs -name '*.pod' -o -name '*.ld' -o -name '*.a' -o -name '*.h' -delete
+	#rm -rf packfs/man packfs/lib/*/pod/
+	find packfs -type f -executable -delete -o -name '*.pod' -delete -o -name '*.ld' -delete -o -name '*.a' -delete -o -name '*.h' -delete
 	-echo AFTER; find packfs 
 	perl perlpack.pl -i packfs -o perlpack.h --prefix=/mnt/perlpack/ --ld="$(LD)"
 	cp perlpack.pl myscript.pl && $(LD) -r -b binary -o myscript.o myscript.pl
