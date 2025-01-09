@@ -7,8 +7,7 @@ MODULES_a = mro/mro.a Devel/Peek/Peek.a File/DosGlob/DosGlob.a File/Glob/Glob.a 
 MODULES_ext = mro Devel/Peek File/DosGlob File/Glob Sys/Syslog Sys/Hostname PerlIO/via PerlIO/mmap PerlIO/encoding PerlIO/scalar B attributes Unicode/Normalize Unicode/Collate threads threads/shared IPC/SysV re Digest/MD5 Digest/SHA SDBM_File Math/BigInt/FastCalc Data/Dumper I18N/Langinfo Time/HiRes Time/Piece IO Socket Hash/Util/FieldHash Hash/Util Filter/Util/Call POSIX Encode/Unicode Encode Encode/JP Encode/KR Encode/EBCDIC Encode/CN Encode/Symbol Encode/Byte Encode/TW Compress/Raw/Zlib Compress/Raw/Bzip2 MIME/Base64 Cwd Storable List/Util Fcntl Opcode   
 
 build/libperl.a:
-	mkdir -p build
-	curl -L $(URLPERL) | tar -xzf - --strip-components=1 --directory=build
+	mkdir -p build && curl -L $(URLPERL) | tar -xzf - -C build --strip-components=1
 	cd build && sh ./Configure -sde -Dman1dir=none -Dman3dir=none -Dprefix=/mnt/perlpack -Dinstallprefix=../packfs -Aldflags=-lm -Accflags=-lm -Dusedevel -Dlibs="-lpthread -ldl -lm -lutil -lc" -Dstatic_ext="$(MODULES_ext)" && cd ..
 	$(MAKE) -C build
 	$(MAKE) -C build install
