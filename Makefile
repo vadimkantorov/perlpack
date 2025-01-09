@@ -8,14 +8,12 @@ MODULES_ext = mro Devel/Peek File/DosGlob File/Glob Sys/Syslog Sys/Hostname Perl
 
 build/libperl.a:
 	mkdir -p build && curl -L $(URLPERL) | tar -xzf - -C build --strip-components=1
-	cd build && sh ./Configure -sde -Dman1dir=none -Dman3dir=none -Dprefix=/mnt/perlpack -Dinstallprefix=../packfs -Aldflags=-lm -Accflags=-lm -Dusedevel -Dlibs="-lpthread -ldl -lm -lutil -lc" -Dstatic_ext="$(MODULES_ext)" && cd ..
+	cd build && sh ./Configure -sde -Dman1dir=none -Dman3dir=none -Dprefix=/mnt/perlpack -Dinstallprefix=../packfs -Aldflags=-lm -Accflags=-lm -Dlibs="-lpthread -ldl -lm -lutil -lc" -Dstatic_ext="$(MODULES_ext)" && cd ..
 	$(MAKE) -C build
 	$(MAKE) -C build install
 
 perlpackstatic: build/libperl.a
-	#rm -rf packfs/man packfs/lib/*/pod/
 	find packfs -type f -executable -delete -o -name '*.ld' -delete -o -name '*.a' -delete -o -name '*.so' -delete -o -name '*.h' -delete -o -name '*.pod' -delete 
-	-echo AFTER; find packfs 
 	perl perlpack.pl -i packfs -o perlpack.h --prefix=/mnt/perlpack/ --ld="$(LD)"
 	cp perlpack.pl myscript.pl && $(LD) -r -b binary -o myscript.o myscript.pl
 	$(CC) -o $@ perlpack.c myscript.o -DPACKFS_BUILTIN_PREFIX=/mnt/perlpack/  -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -I$(PWD)/build -I/usr/local/include   -Wl,-E -fstack-protector-strong -fwrapv -fno-strict-aliasing -L/usr/local/lib build/libperl.a -lc -lpthread -ldl -lm -lutil -Wl,--wrap=open,--wrap=close,--wrap=read,--wrap=access,--wrap=lseek,--wrap=stat,--wrap=fstat,--wrap=fopen,--wrap=fileno $(STATICLDFLAGS)  $(MODULES_def) $(shell printf "build/lib/auto/%s " $(MODULES_a)) @perlpack.h.txt 
