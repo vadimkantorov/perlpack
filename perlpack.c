@@ -23,11 +23,11 @@ extern int      __real_fstat(int fd, struct stat * statbuf);
 extern FILE*    __real_fopen(const char *path, const char *mode);                       
 extern int      __real_fileno(FILE* stream);                                            
     
-size_t packfs_builtin_files_num;
-const char** packfs_builtin_starts;
-const char** packfs_builtin_ends;
-const char** packfs_builtin_safepaths;
-const char** packfs_builtin_abspaths;
+//size_t packfs_builtin_files_num;
+//const char** packfs_builtin_starts;
+//const char** packfs_builtin_ends;
+//const char** packfs_builtin_safepaths;
+//const char** packfs_builtin_abspaths;
 
 enum {
     packfs_filefd_min = 1000000000, 
