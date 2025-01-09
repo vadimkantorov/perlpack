@@ -37,12 +37,14 @@ int packfs_initialized = 0, packfs_disabled = 0;
 int packfs_filefd[packfs_filefd_max - packfs_filefd_min];
 FILE* packfs_fileptr[packfs_filefd_max - packfs_filefd_min];
 size_t packfs_filesize[packfs_filefd_max - packfs_filefd_min];
-char packfs_builtin_prefix[packfs_filepath_max_len];
 
-struct packfs_context
-{
-    
-};
+#define PACKFS_STRING_VALUE_(x) #x
+#define PACKFS_STRING_VALUE(x) PACKFS_STRING_VALUE_(x)
+// TODO: append / if missing
+char packfs_builtin_prefix[packfs_filepath_max_len] = PACKFS_STRING_VALUE(PACKFS_BUILTIN_PREFIX);
+
+
+struct packfs_context { };
 
 struct packfs_context* packfs_ensure_context()
 {
@@ -50,24 +52,11 @@ struct packfs_context* packfs_ensure_context()
 
     if(packfs_ctx.packfs_initialized != 1)
     {
-        // TODO: append / if missing
-#define PACKFS_STRING_VALUE_(x) #x
-#define PACKFS_STRING_VALUE(x) PACKFS_STRING_VALUE_(x)
-        strcpy(packfs_ctx.packfs_builtin_prefix,
-#ifdef PACKFS_BUILTIN_PREFIX
-            PACKFS_STRING_VALUE(PACKFS_BUILTIN_PREFIX)
-#else
-        ""
-#endif
-        );
-#undef PACKFS_STRING_VALUE_
-#undef PACKFS_STRING_VALUE
-
-        packfs_ctx.packfs_initialized = 1;
-        packfs_ctx.packfs_disabled = 1;
+        packfs_initialized = 1;
+        packfs_disabled = 1;
 
 #ifdef PACKFS_BUILTIN_PREFIX
-        packfs_ctx.packfs_disabled = 0;
+        packfs_disabled = 0;
 #endif
     }
     
