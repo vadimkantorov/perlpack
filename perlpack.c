@@ -13,6 +13,16 @@
 
 #include "perlpack.h"
 
+extern int      __real_open(const char *path, int flags);                               
+extern int      __real_close(int fd);                                                   
+extern ssize_t  __real_read(int fd, void* buf, size_t count);                           
+extern int      __real_access(const char *path, int flags);                             
+extern off_t    __real_lseek(int fd, off_t offset, int whence);                         
+extern int      __real_stat(const char *restrict path, struct stat *restrict statbuf);  
+extern int      __real_fstat(int fd, struct stat * statbuf);                            
+extern FILE*    __real_fopen(const char *path, const char *mode);                       
+extern int      __real_fileno(FILE* stream);                                            
+
 enum {
     packfs_filefd_min = 1000000000, 
     packfs_filefd_max = 1000001000, 
@@ -51,15 +61,15 @@ struct packfs_context* packfs_ensure_context()
     if(packfs_ctx.initialized != 1)
     {
 #ifdef PACKFS_STATIC
-        extern int      __real_open(const char *path, int flags);                               packfs_ctx.orig_open    = __real_open;
-        extern int      __real_close(int fd);                                                   packfs_ctx.orig_close   = __real_close;
-        extern ssize_t  __real_read(int fd, void* buf, size_t count);                           packfs_ctx.orig_read    = __real_read;
-        extern int      __real_access(const char *path, int flags);                             packfs_ctx.orig_access  = __real_access;
-        extern off_t    __real_lseek(int fd, off_t offset, int whence);                         packfs_ctx.orig_lseek   = __real_lseek;
-        extern int      __real_stat(const char *restrict path, struct stat *restrict statbuf);  packfs_ctx.orig_stat    = __real_stat;
-        extern int      __real_fstat(int fd, struct stat * statbuf);                            packfs_ctx.orig_fstat   = __real_fstat;
-        extern FILE*    __real_fopen(const char *path, const char *mode);                       packfs_ctx.orig_fopen   = __real_fopen;
-        extern int      __real_fileno(FILE* stream);                                            packfs_ctx.orig_fileno  = __real_fileno;
+        packfs_ctx.orig_open    = __real_open;
+        packfs_ctx.orig_close   = __real_close;
+        packfs_ctx.orig_read    = __real_read;
+        packfs_ctx.orig_access  = __real_access;
+        packfs_ctx.orig_lseek   = __real_lseek;
+        packfs_ctx.orig_stat    = __real_stat;
+        packfs_ctx.orig_fstat   = __real_fstat;
+        packfs_ctx.orig_fopen   = __real_fopen;
+        packfs_ctx.orig_fileno  = __real_fileno;
 #else
         #include <dlfcn.h>
         packfs_ctx.orig_open   = dlsym(RTLD_NEXT, "open");
