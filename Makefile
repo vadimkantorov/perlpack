@@ -1,4 +1,4 @@
-URLPERL = https://www.cpan.org/src/5.0/perl-5.35.4.tar.gz
+URLPERL = https://www.cpan.org/src/5.0/perl-5.40.0.tar.gz
 
 STATICLDFLAGS = --static -static -static-libstdc++ -static-libgcc 
 
