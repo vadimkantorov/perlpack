@@ -14,7 +14,7 @@ build/libperl.a:
 
 perlpackstatic: build/libperl.a
 	#rm -rf packfs/man packfs/lib/*/pod/
-	find packfs -type f -executable -delete -o -name '*.pod' -delete -o -name '*.ld' -delete -o -name '*.a' -delete -o -name '*.h' -delete
+	find packfs -type f -executable -delete -o -name '*.ld' -delete -o -name '*.a' -delete -o -name '*.so' -delete -o -name '*.h' -delete -o -name '*.pod' -delete 
 	-echo AFTER; find packfs 
 	perl perlpack.pl -i packfs -o perlpack.h --prefix=/mnt/perlpack/ --ld="$(LD)"
 	cp perlpack.pl myscript.pl && $(LD) -r -b binary -o myscript.o myscript.pl
