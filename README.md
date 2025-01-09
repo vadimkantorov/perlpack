@@ -5,6 +5,7 @@
 - embeds `*.pm` modules into the executable
 - showcases embedding a user Perl script (for illustration is used `perlpack.pl`, see [`Makefile`](./Makefile))
 - showcases embedding arbitrary files along (see [`Makefile`](./Makefile) and add files into the `packfs` directory)
+- showcases the `--wrap` linker flag enabling the overrides of the libc's filesystem-related functions
 
 # Limitations
 - not all I/O function calls are reimplemented
