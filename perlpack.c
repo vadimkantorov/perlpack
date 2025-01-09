@@ -60,7 +60,6 @@ struct packfs_context* packfs_ensure_context()
 
     if(packfs_ctx.initialized != 1)
     {
-#ifdef PACKFS_STATIC
         packfs_ctx.orig_open    = __real_open;
         packfs_ctx.orig_close   = __real_close;
         packfs_ctx.orig_read    = __real_read;
@@ -70,18 +69,6 @@ struct packfs_context* packfs_ensure_context()
         packfs_ctx.orig_fstat   = __real_fstat;
         packfs_ctx.orig_fopen   = __real_fopen;
         packfs_ctx.orig_fileno  = __real_fileno;
-#else
-        #include <dlfcn.h>
-        packfs_ctx.orig_open   = dlsym(RTLD_NEXT, "open");
-        packfs_ctx.orig_close  = dlsym(RTLD_NEXT, "close");
-        packfs_ctx.orig_read   = dlsym(RTLD_NEXT, "read");
-        packfs_ctx.orig_access = dlsym(RTLD_NEXT, "access");
-        packfs_ctx.orig_lseek  = dlsym(RTLD_NEXT, "lseek");
-        packfs_ctx.orig_stat   = dlsym(RTLD_NEXT, "stat");
-        packfs_ctx.orig_fstat  = dlsym(RTLD_NEXT, "fstat");
-        packfs_ctx.orig_fopen  = dlsym(RTLD_NEXT, "fopen");
-        packfs_ctx.orig_fileno = dlsym(RTLD_NEXT, "fileno");
-#endif
         // TODO: append / if missing
 #define PACKFS_STRING_VALUE_(x) #x
 #define PACKFS_STRING_VALUE(x) PACKFS_STRING_VALUE_(x)
