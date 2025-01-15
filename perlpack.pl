@@ -24,8 +24,10 @@ Getopt::Long::GetOptions(
 
 die "Input path does not exist or is not a directory" unless -e $input_path && -d $input_path ;
 die "Output path not specified" if $output_path eq '';
+
+$output_path = Cwd::abs_path($output_path);
 File::Path::make_path($output_path . '.o');
-my (@objects, @files, @relpaths_dirs, @safepaths, @relpaths);
+my (@objects, @relpaths_dirs, @safepaths, @relpaths);
     
 # problem: can produce the same symbol name because of this mapping
 my %translate = ('.' => '_', '-' => '_', '_' => '__', '/' => '_');
@@ -54,11 +56,11 @@ File::Find::find(sub {
         $include_file = 0;
     }
     if ($include_file) {
-        push @files, $p;
         push @safepaths, $safepath;
         push @relpaths, $relpath;
         push @objects, File::Spec->catfile($output_path . '.o', $safepath . '.o');
-        system($ld, '-r', '-b', 'binary', '-o', $objects[-1], $files[-1]) == 0 or die "ld command failed: $?";
+        
+        chdir $input_path; system($ld, '-r', '-b', 'binary', '-o', $objects[-1], $relpaths[-1]) == 0 or die "ld command failed: $?";
     }
     chdir $newcwd;
 }, $input_path);
@@ -66,7 +68,7 @@ File::Find::find(sub {
 open my $g, '>', $output_path . '.txt' or die;
 print $g join("\n", @objects);
 open my $f, '>', $output_path or die;
-print $f "size_t packfs_builtin_files_num = ", scalar(@files), ", packfs_builtin_dirs_num = ", scalar(@relpaths_dirs), ";\n\n";
+print $f "size_t packfs_builtin_files_num = ", scalar(@relpaths), ", packfs_builtin_dirs_num = ", scalar(@relpaths_dirs), ";\n\n";
 print $f "const char* packfs_builtin_abspaths[] = {\n\"" , join("\",\n\"", map { File::Spec->catfile($prefix, $_) } @relpaths), "\"\n};\n\n";
 print $f "const char* packfs_builtin_abspaths_dirs[] = {\n\"" , join("\",\n\"", map { File::Spec->catfile($prefix, $_) } @relpaths_dirs) , "\"\n};\n\n";
 print $f join("\n", map { "extern char _binary_${_}_start[], _binary_${_}_end[];" } @safepaths), "\n\n";
