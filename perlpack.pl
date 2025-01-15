@@ -26,16 +26,21 @@ die "Input path does not exist or is not a directory" unless -e $input_path && -
 die "Output path not specified" if $output_path eq '';
 File::Path::make_path($output_path . '.o');
 my (@objects, @files, @dirs_relpaths, @safepaths, @relpaths);
+    
+# problem: can produce the same symbol name because of this mapping
+my $translate = ('.' => '_', '-' => '_', '_' => '__', '/' => '_');
+my $translate_keys = join("", keys %translate);
 
 my $oldcwd = Cwd::getcwd();
 File::Find::find(sub {
     my $newcwd = Cwd::getcwd(); chdir $oldcwd; 
     my $p = $File::Find::name;
     
-    my $relpath = $p;
+    $relpath = $p;
     if (index($relpath, $input_path) == 0) { $relpath = substr($relpath, length($input_path)); }
     if (index($relpath, '/') == 0) { $relpath = substr($relpath, 1); }
-    # problem: can produce the same symbol name because of this mapping
+    my $safepath = $relpath; 
+    $safepath =~ s/([$translate_keys])/$translate{$1}/g;
 
     my $include_file = 1;
     if (-d $p) {
