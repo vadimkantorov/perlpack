@@ -28,7 +28,7 @@ File::Path::make_path($output_path . '.o');
 my (@objects, @files, @dirs_relpaths, @safepaths, @relpaths);
     
 # problem: can produce the same symbol name because of this mapping
-my $translate = ('.' => '_', '-' => '_', '_' => '__', '/' => '_');
+my @translate = ('.' => '_', '-' => '_', '_' => '__', '/' => '_');
 my $translate_keys = join("", keys %translate);
 
 my $oldcwd = Cwd::getcwd();
@@ -36,7 +36,7 @@ File::Find::find(sub {
     my $newcwd = Cwd::getcwd(); chdir $oldcwd; 
     my $p = $File::Find::name;
     
-    $relpath = $p;
+    my $relpath = $p;
     if (index($relpath, $input_path) == 0) { $relpath = substr($relpath, length($input_path)); }
     if (index($relpath, '/') == 0) { $relpath = substr($relpath, 1); }
     my $safepath = $relpath; 
