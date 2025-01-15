@@ -39,8 +39,8 @@ File::Find::find(sub {
     my $relpath = $p;
     if (index($relpath, $input_path) == 0) { $relpath = substr($relpath, length($input_path)); }
     if (index($relpath, '/') == 0) { $relpath = substr($relpath, 1); }
-    my $safepath = $relpath; 
-    $safepath =~ s/([$translate_keys])/$translate{$1}/g;
+    my $safepath = ''; 
+    for my $char (split //, $relpath) { $safepath .= exists $translate{$char} ? $translate{$char} : $char; }
 
     my $include_file = 1;
     if (-d $p) {
