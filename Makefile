@@ -14,6 +14,6 @@ build/libperl.a:
 
 perlpackstatic: build/libperl.a
 	find packfs -type f -executable -delete -o -name '*.ld' -delete -o -name '*.a' -delete -o -name '*.so' -delete -o -name '*.h' -delete -o -name '*.pod' -delete 
-	perl perlpack.pl -i packfs -o perlpack.h --prefix=/mnt/perlpack/ --ld "$(LD)" --exclude-executable --exclude '\.a$|\.so$|\.pod$|\.ld$|\.h$' --include bin/biber
+	perl perlpack.pl -i packfs -o perlpack.h --prefix=/mnt/perlpack/ --ld "$(LD)" --exclude-executable --exclude '\.a$$|\.so$$|\.pod$$|\.ld$$|\.h$$' --include bin/biber
 	cp perlpack.pl myscript.pl && $(LD) -r -b binary -o myscript.o myscript.pl
 	$(CC) -o $@ perlpack.c myscript.o -DPACKFS_BUILTIN_PREFIX=/mnt/perlpack/  -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -I$(PWD)/build -I/usr/local/include   -Wl,-E -fstack-protector-strong -fwrapv -fno-strict-aliasing -L/usr/local/lib build/libperl.a -lc -lpthread -ldl -lm -lutil -Wl,--wrap=open,--wrap=close,--wrap=read,--wrap=access,--wrap=lseek,--wrap=stat,--wrap=fstat,--wrap=fopen,--wrap=fileno $(STATICLDFLAGS)  $(MODULES_def) $(shell printf "build/lib/auto/%s " $(MODULES_a)) @perlpack.h.txt 
