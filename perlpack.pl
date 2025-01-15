@@ -45,6 +45,7 @@ File::Find::find(sub {
     my $include_file = 1;
     if (-d $p) {
         push @relpaths_dirs, $p;
+        $include_file = 0;
     } elsif ($include ne '' and $p =~ /$include/) {
         $include_file = 1;
     } elsif ($exclude ne '' and $p =~ /$exclude/) {
