@@ -25,7 +25,7 @@ Getopt::Long::GetOptions(
 die "Input path does not exist or is not a directory" unless -e $input_path && -d $input_path ;
 die "Output path not specified" if $output_path eq '';
 File::Path::make_path($output_path . '.o');
-my (@objects, @files, @dirs_relpaths, @safepaths, @relpaths);
+my (@objects, @files, @relpaths_dirs, @safepaths, @relpaths);
     
 # problem: can produce the same symbol name because of this mapping
 my %translate = ('.' => '_', '-' => '_', '_' => '__', '/' => '_');
@@ -44,7 +44,7 @@ File::Find::find(sub {
 
     my $include_file = 1;
     if (-d $p) {
-        push @dirs_relpaths, $p;
+        push @relpaths_dirs, $p;
     } elsif ($include ne '' and $p =~ /$include/) {
         $include_file = 1;
     } elsif ($exclude ne '' and $p =~ /$exclude/) {
@@ -65,7 +65,7 @@ File::Find::find(sub {
 open my $g, '>', $output_path . '.txt' or die;
 print $g join("\n", @objects);
 open my $f, '>', $output_path or die;
-print $f "size_t packfs_builtin_files_num = ", scalar(@files), ", packfs_builtin_dirs_num = ", scalar(@dirs_relpaths), ";\n\n";
+print $f "size_t packfs_builtin_files_num = ", scalar(@files), ", packfs_builtin_dirs_num = ", scalar(@relpaths_dirs), ";\n\n";
 print $f "const char* packfs_builtin_abspaths[] = {\n\"" , join("\",\n\"", map { File::Spec->catfile($prefix, $_) } @relpaths), "\"\n};\n\n";
 print $f "const char* packfs_builtin_abspaths_dirs[] = {\n\"" , join("\",\n\"", map { File::Spec->catfile($prefix, $_) } @relpaths_dirs) , "\"\n};\n\n";
 print $f join("\n", map { "extern char _binary_${_}_start[], _binary_${_}_end[];" } @safepaths), "\n\n";
