@@ -5,33 +5,49 @@ use File::Path;
 use File::Find;
 use File::Spec;
 use Cwd;
-
 my $input_path = '';
 my $output_path = '';
 my $prefix = '';
 my $ld = 'ld';
+my $include = '';
+my $exclude = '';
+my $exclude_executable = 0;
 Getopt::Long::GetOptions(
-    'input-path|i=s'  => \$input_path,
-    'output-path|o=s' => \$output_path,
-    'prefix=s'        => \$prefix,
-    'ld=s'            => \$ld
+    'input-path|i=s'      => \$input_path,
+    'output-path|o=s'     => \$output_path,
+    'prefix=s'            => \$prefix,
+    'ld=s'                => \$ld,
+    'include=s'           => \$include,
+    'exclude=s'           => \$exclude,
+    'exclude-executable'  => \$exclude_executable
 );
+
 die "Input path does not exist or is not a directory" unless -e $input_path && -d $input_path ;
 die "Output path not specified" if $output_path eq '';
-
 File::Path::make_path($output_path . '.o');
+my (@objects, @files, @dirs_relpaths, @safepaths, @relpaths);
 
 my $oldcwd = Cwd::getcwd();
-my (@objects, @files, @dirs_relpaths, @safepaths, @relpaths);
 File::Find::find(sub {
     my $newcwd = Cwd::getcwd(); chdir $oldcwd; 
     my $p = $File::Find::name;
-    my $safepath = $p; $safepath =~ s/[\/.-]/_/g;
-    my $relpath = (split(/\//, $p, 2))[-1];
+    
+    $relpath = $p;
+    if (index($relpath, $input_path) == 0) { $relpath = substr($relpath, length($input_path)); }
+    if (index($relpath, '/') == 0) { $relpath = substr($relpath, 1); }
+    # problem: can produce the same symbol name because of this mapping
 
+    my $include_file = 1;
     if (-d $p) {
         push @dirs_relpaths, $p;
-    } else {
+    } elsif ($include ne '' and $p =~ /$include/) {
+        $include_file = 1;
+    } elsif ($exclude ne '' and $p =~ /$exclude/) {
+        $include_file = 0;
+    } elsif ($exclude_executable and (-x $p)) {
+        $include_file = 0;
+    }
+    if ($include_file) {
         push @files, $p;
         push @safepaths, $safepath;
         push @relpaths, $relpath;
@@ -41,16 +57,12 @@ File::Find::find(sub {
     chdir $newcwd;
 }, $input_path);
 
-# problem: can produce the same symbol name because of this mapping
-
 open my $g, '>', $output_path . '.txt' or die;
 print $g join("\n", @objects);
-
 open my $f, '>', $output_path or die;
-print $f "size_t packfs_builtin_files_num = ", scalar(@files), ";\n\n";
-print $f join("\n", map { "extern char _binary_${_}_start[], _binary_${_}_end[];" } @safepaths), "\n\n";
-
-print $f "const char* packfs_builtin_safepaths[] = {\n\"", join("\",\n\"", @safepaths), "\"\n};\n";
+print $f "size_t packfs_builtin_files_num = ", scalar(@files), ", packfs_builtin_dirs_num = ", scalar(@dirs_relpaths), ";\n\n";
 print $f "const char* packfs_builtin_abspaths[] = {\n\"" , join("\",\n\"", map { File::Spec->catfile($prefix, $_) } @relpaths), "\"\n};\n\n";
+print $f "const char* packfs_builtin_abspaths_dirs[] = {\n\"" , join("\",\n\"", map { File::Spec->catfile($prefix, $_) } @relpaths_dirs) , "\"\n};\n\n";
+print $f join("\n", map { "extern char _binary_${_}_start[], _binary_${_}_end[];" } @safepaths), "\n\n";
 print $f "const char* packfs_builtin_starts[] = {\n", join("\n", map { "_binary_${_}_start," } @safepaths), "\n};\n\n";
 print $f "const char* packfs_builtin_ends[] = {\n", join("\n", map { "_binary_${_}_end," } @safepaths), "\n};\n\n";

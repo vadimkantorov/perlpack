@@ -42,6 +42,8 @@ size_t packfs_filesize[packfs_filefd_max - packfs_filefd_min];
 #define PACKFS_STRING_VALUE(x) PACKFS_STRING_VALUE_(x)
 // TODO: append / if missing
 char packfs_builtin_prefix[] = PACKFS_STRING_VALUE(PACKFS_BUILTIN_PREFIX);
+#undef PACKFS_STRING_VALUE
+#undef PACKFS_STRING_VALUE_
 
 const char* packfs_sanitize_path(const char* path)
 {
