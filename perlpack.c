@@ -12,6 +12,7 @@
 #include <sys/types.h>
 
 #include "perlpack.h"
+//size_t packfs_builtin_files_num, packfs_builtin_dirs_num; const char** packfs_builtin_abspaths; const char** packfs_builtin_abspaths_dirs; const char** packfs_builtin_starts; const char** packfs_builtin_ends;
 
 extern int      __real_open(const char *path, int flags);                               
 extern int      __real_close(int fd);                                                   
@@ -28,11 +29,6 @@ enum {
     packfs_filefd_max = 1000001000, 
     packfs_filepath_max_len = 128, 
 };
-//size_t packfs_builtin_files_num;
-//const char** packfs_builtin_starts;
-//const char** packfs_builtin_ends;
-//const char** packfs_builtin_safepaths;
-//const char** packfs_builtin_abspaths;
 int packfs_enabled;
 int packfs_filefd[packfs_filefd_max - packfs_filefd_min];
 FILE* packfs_fileptr[packfs_filefd_max - packfs_filefd_min];
@@ -180,16 +176,18 @@ int packfs_stat(const char* path, int fd, struct stat *restrict statbuf)
             if(0 == strcmp(path, packfs_builtin_abspaths[i]))
             {
                 *statbuf = (struct stat){0};
-                //if(packfs_builtin[i].isdir)
-                //{
-                //    statbuf->st_size = 0;
-                //    statbuf->st_mode = S_IFDIR;
-                //}
-                //else
-                {
-                    statbuf->st_size = (off_t)(packfs_builtin_ends[i] - packfs_builtin_starts[i]);
-                    statbuf->st_mode = S_IFREG;
-                }
+                statbuf->st_size = (off_t)(packfs_builtin_ends[i] - packfs_builtin_starts[i]);
+                statbuf->st_mode = S_IFREG;
+                return 0;
+            }
+        }
+        for(size_t i = 0; i < packfs_builtin_dirs_num; i++)
+        {
+            if(0 == strcmp(path_sanitized, packfs_builtin_abspaths_dirs[i]))
+            {
+                *statbuf = (struct stat){0};
+                statbuf->st_size = 0;
+                statbuf->st_mode = S_IFDIR;
                 return 0;
             }
         }
