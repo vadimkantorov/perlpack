@@ -29,8 +29,8 @@ $output_path = Cwd::abs_path($output_path);
 File::Path::make_path($output_path . '.o');
 my (@objects, @relpaths_dirs, @safepaths, @relpaths);
     
-# problem: can produce the same symbol name because of this mapping
-my %translate = ('.' => '_', '-' => '_', '_' => '__', '/' => '_');
+# problem: can produce the same symbol name because of this mapping, ld maps only to _, so may need to rename the file before invoking ld
+my %translate = ('.' => '_', '-' => '_', '_' => '_', '/' => '_');
 my $translate_keys = join("", keys %translate);
 
 my $oldcwd = Cwd::getcwd();
