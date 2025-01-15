@@ -32,7 +32,7 @@ File::Find::find(sub {
     my $newcwd = Cwd::getcwd(); chdir $oldcwd; 
     my $p = $File::Find::name;
     
-    $relpath = $p;
+    my $relpath = $p;
     if (index($relpath, $input_path) == 0) { $relpath = substr($relpath, length($input_path)); }
     if (index($relpath, '/') == 0) { $relpath = substr($relpath, 1); }
     # problem: can produce the same symbol name because of this mapping
