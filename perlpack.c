@@ -53,16 +53,16 @@ int packfs_strncmp(const char* prefix, const char* path, size_t count)
 
 int packfs_open(const char* path, FILE** out)
 {
-    path = packfs_sanitize_path(path);
+    const char* path_sanitized = packfs_sanitize_path(path);
 
     FILE* fileptr = NULL;
     size_t filesize = 0;
     
-    if(packfs_builtin_files_num > 0 && 0 == packfs_strncmp(packfs_builtin_prefix, path, strlen(packfs_builtin_prefix)))
+    if(packfs_builtin_files_num > 0 && 0 == packfs_strncmp(packfs_builtin_prefix, path_sanitized, strlen(packfs_builtin_prefix)))
     {
         for(size_t i = 0; i < packfs_builtin_files_num; i++)
         {
-            if(0 == strcmp(path, packfs_builtin_abspaths[i]))
+            if(0 == strcmp(path_sanitized, packfs_builtin_abspaths[i]))
             {
                 filesize = (size_t)(packfs_builtin_ends[i] - packfs_builtin_starts[i]);
                 fileptr = fmemopen((void*)packfs_builtin_starts[i], filesize, "r");
@@ -150,13 +150,13 @@ int packfs_seek(int fd, long offset, int whence)
 
 int packfs_access(const char* path)
 {
-    path = packfs_sanitize_path(path);
+    const char* path_sanitized = packfs_sanitize_path(path);
 
-    if(0 == packfs_strncmp(packfs_builtin_prefix, path, strlen(packfs_builtin_prefix)))
+    if(0 == packfs_strncmp(packfs_builtin_prefix, path_sanitized, strlen(packfs_builtin_prefix)))
     {
         for(size_t i = 0; i < packfs_builtin_files_num; i++)
         {
-            if(0 == strcmp(path, packfs_builtin_abspaths[i]))
+            if(0 == strcmp(path_sanitized, packfs_builtin_abspaths[i]))
                 return 0;
         }
         return -1;
@@ -167,13 +167,13 @@ int packfs_access(const char* path)
 
 int packfs_stat(const char* path, int fd, struct stat *restrict statbuf)
 {
-    path = packfs_sanitize_path(path);
+    const char* path_sanitized = packfs_sanitize_path(path);
     
-    if(0 == packfs_strncmp(packfs_builtin_prefix, path, strlen(packfs_builtin_prefix)))
+    if(0 == packfs_strncmp(packfs_builtin_prefix, path_sanitized, strlen(packfs_builtin_prefix)))
     {
         for(size_t i = 0; i < packfs_builtin_files_num; i++)
         {
-            if(0 == strcmp(path, packfs_builtin_abspaths[i]))
+            if(0 == strcmp(path_sanitized, packfs_builtin_abspaths[i]))
             {
                 *statbuf = (struct stat){0};
                 statbuf->st_size = (off_t)(packfs_builtin_ends[i] - packfs_builtin_starts[i]);
