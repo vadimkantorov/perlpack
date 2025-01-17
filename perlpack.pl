@@ -67,6 +67,7 @@ File::Find::find(sub {
         File::Copy::copy($relpath, File::Spec->catfile($output_path_o, $safepath));
         print("copy ", $relpath, " ", File::Spec->catfile($output_path_o, $safepath), "\n");
         print($safepath, " ", $output_path_o, "\nBEFORE\n");
+        print(`ls`);
         chdir($output_path_o);
         print(`ls`);
         print("\nAFTER\n");
