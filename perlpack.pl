@@ -64,6 +64,7 @@ File::Find::find(sub {
         
         File::Copy::copy($relpath, File::Spec->catfile($output_path + '.o', $safepath));
         chdir($output_path . '.o'); system($ld, '-r', '-b', 'binary', '-o', $objects[-1], $safepath) == 0 or die "ld command failed: $?";
+        unlink($safepath);
     }
     chdir($newcwd);
 }, $input_path);
