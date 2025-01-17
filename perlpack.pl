@@ -56,12 +56,14 @@ File::Find::find(sub {
         $include_file = 0;
     } elsif ($exclude_executable and (-x $p)) {
         $include_file = 0;
+    } elsif (substr($relpath, -2) eq '.o') {
+        $include_file = 0;
     }
+    
     if ($include_file) {
         push @safepaths, $safepath;
         push @relpaths, $relpath;
         push @objects, File::Spec->catfile($output_path_o, $safepath . '.o');
-        die "File should not end with .o" if substr($relpath, -2) eq '.o';
         
         chdir($output_path_o);
         symlink(File::Spec->catfile($oldcwd, $p), $safepath);
