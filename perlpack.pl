@@ -18,7 +18,7 @@ Getopt::Long::GetOptions(
     'prefix=s'            => \$prefix,
     'ld=s'                => \$ld,
     'include=s'           => \$include,
-    'exclude=s'           => \$exclude,
+    'exclude=s'           => \$exclude
 );
 
 die "Input path does not exist or is not a directory" unless -e $input_path && -d $input_path ;
