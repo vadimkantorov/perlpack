@@ -66,7 +66,7 @@ File::Find::find(sub {
         
         #File::Copy::copy($relpath, File::Spec->catfile($output_path_o, $safepath));
         #chdir($output_path_o);
-        print($safepath)
+        print($safepath);
         print(`ls`);
         #system($ld, '-r', '-b', 'binary', '-o', $objects[-1], $safepath) == 0 or die "ld command failed: $?";
         #unlink($safepath);
