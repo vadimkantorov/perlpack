@@ -65,6 +65,7 @@ File::Find::find(sub {
         die "File should not end with .o" if substr($relpath, -2) eq '.o';
         
         File::Copy::copy($relpath, File::Spec->catfile($output_path_o, $safepath));
+        print("copy ", $relpath, " ", File::Spec->catfile($output_path_o, $safepath), "\n");
         print($safepath, " ", $output_path_o, "\nBEFORE\n");
         chdir($output_path_o);
         print(`ls`);
