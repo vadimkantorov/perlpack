@@ -29,7 +29,8 @@ die "Input path does not exist or is not a directory" unless -e $input_path && -
 die "Output path not specified" if $output_path eq '';
 
 $output_path = Cwd::abs_path($output_path);
-File::Path::make_path($output_path . '.o');
+$output_path_o = $output_path . '.o';
+File::Path::make_path($output_path_o);
 my (@objects, @relpaths_dirs, @safepaths, @relpaths);
     
 # problem: can produce the same symbol name because of this mapping, ld maps only to _, so may need to rename the file before invoking ld
@@ -61,11 +62,11 @@ File::Find::find(sub {
     if ($include_file) {
         push @safepaths, $safepath;
         push @relpaths, $relpath;
-        push @objects, File::Spec->catfile($output_path . '.o', $safepath . '.o');
+        push @objects, File::Spec->catfile($output_path_o, $safepath . '.o');
         die "File should not end with .o" if substr($relpath, -2) eq '.o';
         
-        File::Copy::copy($relpath, File::Spec->catfile($output_path . '.o', $safepath));
-        chdir($output_path . '.o');
+        File::Copy::copy($relpath, File::Spec->catfile($output_path_o, $safepath));
+        chdir($output_path_o);
         
         print(`ls`);
         #system($ld, '-r', '-b', 'binary', '-o', $objects[-1], $safepath) == 0 or die "ld command failed: $?";
