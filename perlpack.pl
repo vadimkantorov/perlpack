@@ -63,9 +63,9 @@ File::Find::find(sub {
         push @objects, File::Spec->catfile($output_path_o, $safepath . '.o');
         die "File should not end with .o" if substr($relpath, -2) eq '.o';
         
-        symlink($relpath, File::Spec->catfile($output_path_o, $safepath));
         chdir($output_path_o);
-        print($relpath, "\n", `ls`);
+        symlink($p, $safepath);
+        print($p," ", $safepath, " ", $relpath, "\n", `ls`);
         system($ld, '-r', '-b', 'binary', '-o', $objects[-1], $safepath) == 0 or die "ld command failed: $?";
         unlink($safepath);
     }
