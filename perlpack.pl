@@ -6,6 +6,8 @@ use File::Find;
 use File::Spec;
 use File::Copy;
 use Cwd;
+use Dir::ls;
+
 my $input_path = '';
 my $output_path = '';
 my $prefix = '';
@@ -64,7 +66,8 @@ File::Find::find(sub {
         
         File::Copy::copy($relpath, File::Spec->catfile($output_path . '.o', $safepath));
         chdir($output_path . '.o');
-        system('ls');
+        
+        print(`ls`);
         #system($ld, '-r', '-b', 'binary', '-o', $objects[-1], $safepath) == 0 or die "ld command failed: $?";
         #unlink($safepath);
     }
