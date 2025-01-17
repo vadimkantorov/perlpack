@@ -31,4 +31,4 @@ jobs:
           path: |
             perlpack.h
             perlpackstatic
-            perlpack.h.o/
+            #perlpack.h.o/
