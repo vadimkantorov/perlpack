@@ -64,10 +64,10 @@ File::Find::find(sub {
         push @objects, File::Spec->catfile($output_path_o, $safepath . '.o');
         die "File should not end with .o" if substr($relpath, -2) eq '.o';
         
-        File::Copy::copy($relpath, File::Spec->catfile($output_path_o, $safepath));
-        print("copy ", $relpath, " ", File::Spec->catfile($output_path_o, $safepath), "\n");
+        #File::Copy::copy($relpath, File::Spec->catfile($output_path_o, $safepath));
+        symlink($relpath, File::Spec->catfile($output_path_o, $safepath));
+        #print("copy ", $relpath, " ", File::Spec->catfile($output_path_o, $safepath), "\n");
         print($safepath, " ", $output_path_o, "\nBEFORE\n");
-        print(`ls`);
         chdir($output_path_o);
         print(`ls`);
         print("\nAFTER\n");
