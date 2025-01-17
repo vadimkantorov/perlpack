@@ -4,6 +4,7 @@ use Getopt::Long;
 use File::Path;
 use File::Find;
 use File::Spec;
+use File::Copy;
 use Cwd;
 my $input_path = '';
 my $output_path = '';
@@ -35,7 +36,7 @@ my $translate_keys = join("", keys %translate);
 
 my $oldcwd = Cwd::getcwd();
 File::Find::find(sub {
-    my $newcwd = Cwd::getcwd(); chdir $oldcwd; 
+    my $newcwd = Cwd::getcwd(); chdir($oldcwd); 
     my $p = $File::Find::name;
     
     my $relpath = $p;
@@ -59,10 +60,12 @@ File::Find::find(sub {
         push @safepaths, $safepath;
         push @relpaths, $relpath;
         push @objects, File::Spec->catfile($output_path . '.o', $safepath . '.o');
+        die "File should not end with .o" if substr($relpath, -2) eq '.o';
         
-        chdir $input_path; system($ld, '-r', '-b', 'binary', '-o', $objects[-1], $relpaths[-1]) == 0 or die "ld command failed: $?";
+        File::Copy::copy($relpath, File::Spec->catfile($output_path + '.o', $safepath));
+        chdir($output_path . '.o'); system($ld, '-r', '-b', 'binary', '-o', $objects[-1], $safepath) == 0 or die "ld command failed: $?";
     }
-    chdir $newcwd;
+    chdir($newcwd);
 }, $input_path);
 
 open my $g, '>', $output_path . '.txt' or die;
