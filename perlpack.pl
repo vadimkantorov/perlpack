@@ -4,7 +4,6 @@ use Getopt::Long;
 use File::Path;
 use File::Find;
 use File::Spec;
-use File::Copy;
 use Cwd;
 
 my $input_path = '';
@@ -64,16 +63,10 @@ File::Find::find(sub {
         push @objects, File::Spec->catfile($output_path_o, $safepath . '.o');
         die "File should not end with .o" if substr($relpath, -2) eq '.o';
         
-        #File::Copy::copy($relpath, File::Spec->catfile($output_path_o, $safepath));
         symlink($relpath, File::Spec->catfile($output_path_o, $safepath));
-        #print("copy ", $relpath, " ", File::Spec->catfile($output_path_o, $safepath), "\n");
-        print($safepath, " ", $output_path_o, "\nBEFORE\n");
         chdir($output_path_o);
-        print(`ls`);
-        print("\nAFTER\n");
-
-        #system($ld, '-r', '-b', 'binary', '-o', $objects[-1], $safepath) == 0 or die "ld command failed: $?";
-        #unlink($safepath);
+        system($ld, '-r', '-b', 'binary', '-o', $objects[-1], $safepath) == 0 or die "ld command failed: $?";
+        unlink($safepath);
     }
     chdir($newcwd);
 }, $input_path);
