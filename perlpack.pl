@@ -12,7 +12,6 @@ my $prefix = '';
 my $ld = 'ld';
 my $include = '';
 my $exclude = '';
-my $exclude_executable = 0;
 Getopt::Long::GetOptions(
     'input-path|i=s'      => \$input_path,
     'output-path|o=s'     => \$output_path,
@@ -20,7 +19,6 @@ Getopt::Long::GetOptions(
     'ld=s'                => \$ld,
     'include=s'           => \$include,
     'exclude=s'           => \$exclude,
-    'exclude-executable'  => \$exclude_executable
 );
 
 die "Input path does not exist or is not a directory" unless -e $input_path && -d $input_path ;
@@ -53,8 +51,6 @@ File::Find::find(sub {
     } elsif ($include ne '' and $p =~ /$include/) {
         $include_file = 1;
     } elsif ($exclude ne '' and $p =~ /$exclude/) {
-        $include_file = 0;
-    } elsif ($exclude_executable and (-x $p)) {
         $include_file = 0;
     } elsif (substr($relpath, -2) eq '.o') {
         $include_file = 0;
