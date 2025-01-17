@@ -6,7 +6,6 @@ use File::Find;
 use File::Spec;
 use File::Copy;
 use Cwd;
-use Dir::ls;
 
 my $input_path = '';
 my $output_path = '';
