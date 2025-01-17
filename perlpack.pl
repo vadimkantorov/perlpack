@@ -65,9 +65,11 @@ File::Find::find(sub {
         die "File should not end with .o" if substr($relpath, -2) eq '.o';
         
         #File::Copy::copy($relpath, File::Spec->catfile($output_path_o, $safepath));
-        #chdir($output_path_o);
-        print($safepath);
+        chdir($output_path_o);
+        print($safepath, "\nBEFORE\n");
         print(`ls`);
+        print("\nAFTER\n");
+
         #system($ld, '-r', '-b', 'binary', '-o', $objects[-1], $safepath) == 0 or die "ld command failed: $?";
         #unlink($safepath);
     }
