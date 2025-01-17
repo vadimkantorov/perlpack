@@ -349,6 +349,8 @@ int __wrap_fstat(int fd, struct stat * statbuf)
     return res;
 }
 
+//////////////////////
+
 #include <EXTERN.h>
 #include <perl.h>
 #include <XSUB.h>
