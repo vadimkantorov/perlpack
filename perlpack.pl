@@ -37,6 +37,7 @@ my $oldcwd = Cwd::getcwd();
 File::Find::find(sub {
     my $newcwd = Cwd::getcwd(); chdir($oldcwd); 
     my $p = $File::Find::name;
+    print($p, "\n");
     
     my $relpath = $p;
     if (index($relpath, $input_path) == 0) { $relpath = substr($relpath, length($input_path)); }
