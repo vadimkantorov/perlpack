@@ -28,7 +28,7 @@ die "Input path does not exist or is not a directory" unless -e $input_path && -
 die "Output path not specified" if $output_path eq '';
 
 $output_path = Cwd::abs_path($output_path);
-$output_path_o = $output_path . '.o';
+my $output_path_o = $output_path . '.o';
 File::Path::make_path($output_path_o);
 my (@objects, @relpaths_dirs, @safepaths, @relpaths);
     
