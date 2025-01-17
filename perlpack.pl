@@ -62,8 +62,9 @@ File::Find::find(sub {
         push @objects, File::Spec->catfile($output_path . '.o', $safepath . '.o');
         die "File should not end with .o" if substr($relpath, -2) eq '.o';
         
-        File::Copy::copy($relpath, File::Spec->catfile($output_path + '.o', $safepath));
-        chdir($output_path . '.o'); system($ld, '-r', '-b', 'binary', '-o', $objects[-1], $safepath) == 0 or die "ld command failed: $?";
+        File::Copy::copy($relpath, File::Spec->catfile($output_path . '.o', $safepath));
+        chdir($output_path . '.o');
+        system($ld, '-r', '-b', 'binary', '-o', $objects[-1], $safepath) == 0 or die "ld command failed: $?";
         unlink($safepath);
     }
     chdir($newcwd);
