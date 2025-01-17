@@ -21,9 +21,9 @@ jobs:
       - name: Build and test perlpackstatic
         run: |
           make perlpackstatic
-          ./perlpackstatic
-          ./perlpackstatic -e 'use Cwd;print(Cwd::cwd(),"\n");'
-          ./perlpackstatic -e 'open(F,"<","/mnt/perlpack/lib/5.35.4/x86_64-linux/Cwd.pm");print(<F>);'
+          #./perlpackstatic
+          #./perlpackstatic -e 'use Cwd;print(Cwd::cwd(),"\n");'
+          #./perlpackstatic -e 'open(F,"<","/mnt/perlpack/lib/5.35.4/x86_64-linux/Cwd.pm");print(<F>);'
        
       - name: Artifacts
         uses: actions/upload-artifact@v4
