@@ -64,7 +64,7 @@ File::Find::find(sub {
         die "File should not end with .o" if substr($relpath, -2) eq '.o';
         
         chdir($output_path_o);
-        symlink($p, $safepath);
+        symlink(File::Spec->catfile($oldcwd, $p), $safepath);
         print($p," ", $safepath, " ", $relpath, "\n", `ls`);
         system($ld, '-r', '-b', 'binary', '-o', $objects[-1], $safepath) == 0 or die "ld command failed: $?";
         unlink($safepath);
