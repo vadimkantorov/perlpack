@@ -65,7 +65,7 @@ File::Find::find({ no_chdir => 1, wanted => sub {
         print($src, "\n");
         print("dst: ");
         print($dst, "\n");
-        symlink(src, dst);
+        symlink($src, $dst);
         chdir($output_path_o);
         system($ld, '-r', '-b', 'binary', '-o', $abspath_o, $safepath) == 0 or die "ld command failed: $?";
         unlink($safepath);
