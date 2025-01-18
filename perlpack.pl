@@ -59,21 +59,11 @@ File::Find::find({ no_chdir => 1, wanted => sub {
         push @relpaths, $relpath;
         push @objects, File::Spec->catfile($output_path_o, $safepath . '.o');
         my $abspath_o = File::Spec->catfile(Cwd::abs_path($output_path_o), $safepath . '.o');
+        my $output_path_o_safepath = File::Spec->catfile($output_path_o, $safepath);
 
-        print("cwd: ", Cwd::getcwd(), " p: ", $p, "\n");
-        my $src = Cwd::abs_path($p);
-        my $dst = File::Spec->catfile($output_path_o, $safepath);
-
-        print("src: ");
-        print($src, "\n");
-        print("dst: ");
-        print($dst, "\n");
-        symlink($src, $dst);
-
-        chdir($output_path_o);
-        system($ld, '-r', '-b', 'binary', '-o', $abspath_o, $safepath) == 0 or die "ld command failed: $?";
-        unlink($safepath);
-        chdir($cwd);
+        symlink(Cwd::abs_path($p), $output_path_o_safepath);
+        chdir($output_path_o); system($ld, '-r', '-b', 'binary', '-o', $abspath_o, $safepath) == 0 or die "ld command failed: $?"; chdir($cwd);
+        unlink($output_path_o_safepath);
     }
 }}, $input_path);
 
