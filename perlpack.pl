@@ -61,7 +61,7 @@ File::Find::find({ no_chdir => 1, wanted => sub {
 
         my $src = Cwd::abs_path($p);
         my $dst = File::Spec->catfile($output_path_o, $safepath);
-        print("src: ")
+        print("src: ");
         print($src, "\n");
         print("dst: ");
         print($dst, "\n");
