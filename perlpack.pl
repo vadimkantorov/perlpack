@@ -59,7 +59,8 @@ File::Find::find({ no_chdir => 1, wanted => sub {
         push @objects, File::Spec->catfile($output_path_o, $safepath . '.o');
         my $abspath_o = File::Spec->catfile(Cwd::abs_path($output_path_o), $safepath . '.o');
 
-        print($p, " ", Cwd::abs_path($p), "\n");
+        print($p, "\n");
+        print(Cwd::abs_path($p), "\n");
         print($output_path_o, " ", $safepath, " ", File::Spec->catfile($output_path_o, $safepath), "\n");
 
         symlink(Cwd::abs_path($p), File::Spec->catfile($output_path_o, $safepath));
