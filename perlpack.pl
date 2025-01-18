@@ -24,13 +24,13 @@ Getopt::Long::GetOptions(
 die "Input path does not exist or is not a directory" unless -e $input_path && -d $input_path ;
 die "Output path not specified" if $output_path eq '';
 
-my $output_path_o = $output_path . '.o';
-File::Path::make_path($output_path_o);
-my (@objects, @relpaths_dirs, @safepaths, @relpaths);
-    
 # problem: can produce the same symbol name because of this mapping, ld maps only to _, so may need to rename the file before invoking ld
 my %translate = ('.' => '_', '-' => '__', '_' => '_', '/' => '_');
 my $translate_keys = join("", keys %translate);
+
+my $output_path_o = $output_path . '.o';
+File::Path::make_path($output_path_o);
+my (@objects, @relpaths_dirs, @safepaths, @relpaths);
 
 File::Find::find({ no_chdir => 1, wanted => sub {
     my $p = $File::Find::name;
@@ -57,12 +57,7 @@ File::Find::find({ no_chdir => 1, wanted => sub {
         push @safepaths, $safepath;
         push @relpaths, $relpath;
         push @objects, File::Spec->catfile($output_path_o, $safepath . '.o');
-        my $abspath_o = Cwd::abs_path($objects[-1]);
-        print("obj: ", $objects[-1], "\n");
-        print("objabs: ", Cwd::abs_path($objects[-1]), "\n");
-        print("objabs2: ", $abspath_o, "\n");
-
-        print("symlink: ", $p, " ", $output_path_o, " ", $safepath, " ", $abspath_o, "\n");
+        my $abspath_o = File::Spec->catfile(Cwd::abs_path($output_path_o), $safepath . '.o');
 
         symlink(Cwd::abs_path($p), File::Spec->catfile($output_path_o, $safepath));
         chdir($output_path_o);
