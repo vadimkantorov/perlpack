@@ -59,7 +59,7 @@ File::Find::find({ no_chdir => 1, wanted => sub {
         push @objects, File::Spec->catfile($output_path_o, $safepath . '.o');
         my $abspath_o = File::Spec->catfile(Cwd::abs_path($output_path_o), $safepath . '.o');
 
-        print("cwd: ", Cwd::getcwd(), " p: ", $p, "\n";)
+        print("cwd: ", Cwd::getcwd(), " p: ", $p, "\n");
         my $src = Cwd::abs_path($p);
         my $dst = File::Spec->catfile($output_path_o, $safepath);
         print("src: ");
