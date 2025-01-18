@@ -24,7 +24,6 @@ Getopt::Long::GetOptions(
 die "Input path does not exist or is not a directory" unless -e $input_path && -d $input_path ;
 die "Output path not specified" if $output_path eq '';
 
-$output_path = Cwd::abs_path($output_path);
 my $output_path_o = $output_path . '.o';
 File::Path::make_path($output_path_o);
 my (@objects, @relpaths_dirs, @safepaths, @relpaths);
@@ -33,11 +32,8 @@ my (@objects, @relpaths_dirs, @safepaths, @relpaths);
 my %translate = ('.' => '_', '-' => '__', '_' => '_', '/' => '_');
 my $translate_keys = join("", keys %translate);
 
-my $oldcwd = Cwd::getcwd();
-File::Find::find(sub {
-    my $newcwd = Cwd::getcwd(); chdir($oldcwd); 
+File::Find::find({ no_chdir => 1, wanted => sub {
     my $p = $File::Find::name;
-    print($p, "\n");
     
     my $relpath = $p;
     if (index($relpath, $input_path) == 0) { $relpath = substr($relpath, length($input_path)); }
@@ -61,14 +57,14 @@ File::Find::find(sub {
         push @safepaths, $safepath;
         push @relpaths, $relpath;
         push @objects, File::Spec->catfile($output_path_o, $safepath . '.o');
+        my $abspath_o = Cwd::abs_path($objects[-1]);
         
+        symlink(Cwd::abs_path($p), File::Spec->catfile($output_path_o, $safepath));
         chdir($output_path_o);
-        symlink(File::Spec->catfile($oldcwd, $p), $safepath);
-        system($ld, '-r', '-b', 'binary', '-o', $objects[-1], $safepath) == 0 or die "ld command failed: $?";
+        system($ld, '-r', '-b', 'binary', '-o', $abspath_o, $safepath) == 0 or die "ld command failed: $?";
         unlink($safepath);
     }
-    chdir($newcwd);
-}, $input_path);
+}}, $input_path);
 
 open my $g, '>', $output_path . '.txt' or die;
 print $g join("\n", @objects);
