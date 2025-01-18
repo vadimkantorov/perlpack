@@ -59,6 +59,8 @@ File::Find::find({ no_chdir => 1, wanted => sub {
         push @objects, File::Spec->catfile($output_path_o, $safepath . '.o');
         my $abspath_o = Cwd::abs_path($objects[-1]);
         
+        print("symlink: ", $p, " ", $output_path_o, " ", $safepath, " ", $abspath_o, "\n");
+
         symlink(Cwd::abs_path($p), File::Spec->catfile($output_path_o, $safepath));
         chdir($output_path_o);
         system($ld, '-r', '-b', 'binary', '-o', $abspath_o, $safepath) == 0 or die "ld command failed: $?";
