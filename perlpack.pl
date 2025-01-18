@@ -20,7 +20,6 @@ Getopt::Long::GetOptions(
     'include=s'           => \$include,
     'exclude=s'           => \$exclude
 );
-
 die "Input path does not exist or is not a directory" unless -e $input_path && -d $input_path ;
 die "Output path not specified" if $output_path eq '';
 
