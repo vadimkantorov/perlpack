@@ -11,7 +11,7 @@
 #include <sys/mman.h>
 #include <sys/types.h>
 
-#include "perlpack.h"
+#include "packfs.h"
 //size_t packfs_builtin_files_num, packfs_builtin_dirs_num; const char** packfs_builtin_abspaths; const char** packfs_builtin_abspaths_dirs; const char** packfs_builtin_starts; const char** packfs_builtin_ends;
 
 extern int      __real_open(const char *path, int flags);                               
@@ -23,13 +23,12 @@ extern int      __real_stat(const char *restrict path, struct stat *restrict sta
 extern int      __real_fstat(int fd, struct stat * statbuf);                            
 extern FILE*    __real_fopen(const char *path, const char *mode);                       
 extern int      __real_fileno(FILE* stream);                                            
-    
 enum {
     packfs_filefd_min = 1000000000, 
     packfs_filefd_max = 1000001000, 
-    packfs_filepath_max_len = 128, 
+    packfs_filepath_max_len = 256, 
 };
-int packfs_enabled;
+int packfs_enabled = 1;
 int packfs_filefd[packfs_filefd_max - packfs_filefd_min];
 FILE* packfs_fileptr[packfs_filefd_max - packfs_filefd_min];
 size_t packfs_filesize[packfs_filefd_max - packfs_filefd_min];
@@ -41,9 +40,20 @@ char packfs_builtin_prefix[] = PACKFS_STRING_VALUE(PACKFS_BUILTIN_PREFIX);
 #undef PACKFS_STRING_VALUE
 #undef PACKFS_STRING_VALUE_
 
-const char* packfs_sanitize_path(const char* path)
+void packfs_sanitize_path(char* path_sanitized, const char* path)
 {
-    return (path != NULL && strlen(path) > 2 && path[0] == '.' && path[1] == '/') ? (path + 2) : path;
+    size_t len = path != NULL ? strlen(path) : 0;
+    if(len == 0)
+        path_sanitized[0] = '\0';
+
+    for(int i = (path != NULL && len > 2 && path[0] == '.' && path[1] == '/') ? 2 : 0, k = 0; len > 0 && i < len; i++)
+    {
+        if(!(i > 1 && path[i] == '/' && path[i - 1] == '/'))
+        {
+            path_sanitized[k++] = path[i];
+            path_sanitized[k] = '\0';
+        }
+    }
 }
 
 int packfs_strncmp(const char* prefix, const char* path, size_t count)
@@ -53,7 +63,7 @@ int packfs_strncmp(const char* prefix, const char* path, size_t count)
 
 int packfs_open(const char* path, FILE** out)
 {
-    const char* path_sanitized = packfs_sanitize_path(path);
+    char path_sanitized[packfs_filepath_max_len]; packfs_sanitize_path(path_sanitized, path);
 
     FILE* fileptr = NULL;
     size_t filesize = 0;
@@ -150,7 +160,7 @@ int packfs_seek(int fd, long offset, int whence)
 
 int packfs_access(const char* path)
 {
-    const char* path_sanitized = packfs_sanitize_path(path);
+    char path_sanitized[packfs_filepath_max_len]; packfs_sanitize_path(path_sanitized, path);
 
     if(0 == packfs_strncmp(packfs_builtin_prefix, path_sanitized, strlen(packfs_builtin_prefix)))
     {
@@ -167,7 +177,7 @@ int packfs_access(const char* path)
 
 int packfs_stat(const char* path, int fd, struct stat *restrict statbuf)
 {
-    const char* path_sanitized = packfs_sanitize_path(path);
+    char path_sanitized[packfs_filepath_max_len]; packfs_sanitize_path(path_sanitized, path);
     
     if(0 == packfs_strncmp(packfs_builtin_prefix, path_sanitized, strlen(packfs_builtin_prefix)))
     {
@@ -303,16 +313,13 @@ off_t __wrap_lseek(int fd, off_t offset, int whence)
     return res;
 }
 
-
 int __wrap_access(const char *path, int flags) 
 {
     if(packfs_enabled)
     {
         int res = packfs_access(path);
         if(res >= -1)
-        {
             return res;
-        }
     }
     
     int res = __real_access(path, flags); 
@@ -325,9 +332,7 @@ int __wrap_stat(const char *restrict path, struct stat *restrict statbuf)
     {
         int res = packfs_stat(path, -1, statbuf);
         if(res >= -1)
-        {
             return res;
-        }
     }
 
     int res = __real_stat(path, statbuf);
@@ -529,8 +534,6 @@ int main(int argc, char *argv[], char* envp[])
         strcpy(script, argv[2]);
     }
     
-    packfs_enabled = 1;
-
     PERL_SYS_INIT3(&argc, &argv, &envp);
     PerlInterpreter* myperl = perl_alloc();
     if(myperl == NULL)
