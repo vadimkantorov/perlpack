@@ -13,6 +13,6 @@ build/libperl.a:
 	$(MAKE) -C build install
 
 perlpackstatic: build/libperl.a
-	perl packfs.pl -i packfs -o packfs.h --prefix=/mnt/perlpack/ --ld "$(LD)" --exclude '\.a$$|\.so$$|\.pod$$|\.ld$$|\.h$$|bin\/'
+	perl packfs.pl -i packfs -o packfs.h --prefix=/mnt/perlpack/ --ld "$(LD)" --exclude '\.a$$|\.so$$|\.pod$$|\.ld$$|\.h$$|\.packlist$$|bin\/'
 	cp packfs.pl myscript.pl && $(LD) -r -b binary -o myscript.o myscript.pl
 	$(CC) -o $@ perlpack.c myscript.o -DPACKFS_BUILTIN_PREFIX=/mnt/perlpack/ -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -I$(PWD)/build -I/usr/local/include   -Wl,-E -fstack-protector-strong -fwrapv -fno-strict-aliasing -L/usr/local/lib build/libperl.a -lc -lpthread -ldl -lm -lutil -Wl,--wrap=open,--wrap=close,--wrap=read,--wrap=access,--wrap=lseek,--wrap=stat,--wrap=fstat,--wrap=fopen,--wrap=fileno $(STATICLDFLAGS)  $(MODULES_def) $(shell printf "build/lib/auto/%s " $(MODULES_a)) @packfs.h.txt 
